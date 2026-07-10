@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="FretNavigator">
+  <rect x="5" y="5" width="54" height="54" rx="14" fill="#ffffff" stroke="#53413c" stroke-width="5" />
+  <rect x="13" y="16" width="4" height="32" rx="1" fill="#53413c" />
+  <rect x="47" y="16" width="4" height="32" rx="1" fill="#53413c" />
+  <path
+    d="M32 17 Q35 28.5 46 32 Q35 35.5 32 47 Q29 35.5 18 32 Q29 28.5 32 17 Z"
+    fill="#53413c"
+  />
+</svg>
