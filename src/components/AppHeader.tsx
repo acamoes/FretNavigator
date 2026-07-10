@@ -18,7 +18,7 @@ export function AppHeader({ context, onHome }: Props) {
         <button type="button" className="app-header__brand" onClick={onHome} title="Home">
           {logoOk ? (
             <img
-              src="/logo.png"
+              src={`${import.meta.env.BASE_URL}logo.png`}
               alt="FretNavigator"
               className="app-header__logo-img"
               onError={() => setLogoOk(false)}
