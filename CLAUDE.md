@@ -2,6 +2,13 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Project docs
+
+- **`decisions.md`** — the *why* behind non-obvious choices (chord schema
+  migrations, keep/refine as transient state, Pages base path, print CSS…).
+  Read it before changing the data model or persistence.
+- **`todo.md`** — current open items.
+
 ## Commands
 
 ```bash
