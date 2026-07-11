@@ -50,6 +50,14 @@ export function FretboardCard({ board, fretboard: fb, index, total }: Props) {
     setRefiningChordIndex(focusedChordIndex);
     setKeepDraft((focusedChord.keep ?? []).map((p) => `${p.stringIndex}:${p.fret}`));
   };
+  // Direct entry from a chord chip: focus + enter selection in one click.
+  const beginRefine = (idx: number) => {
+    const entry = fb.chords[idx];
+    if (!entry) return;
+    setFocusedChordIndex(idx);
+    setRefiningChordIndex(idx);
+    setKeepDraft((entry.keep ?? []).map((p) => `${p.stringIndex}:${p.fret}`));
+  };
   const cancelRefine = () => {
     setRefiningChordIndex(null);
     setKeepDraft([]);
@@ -156,6 +164,7 @@ export function FretboardCard({ board, fretboard: fb, index, total }: Props) {
           onChange={(patch) => updateFretboard(board.id, fb.id, patch)}
           focusedChordIndex={focusedChordIndex}
           onFocusChord={handleFocusChord}
+          onRefineChord={beginRefine}
         />
       </div>
 

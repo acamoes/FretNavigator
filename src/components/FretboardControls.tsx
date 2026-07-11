@@ -19,10 +19,12 @@ interface Props {
   onChange: (patch: Partial<Fretboard>) => void;
   focusedChordIndex: number | null;
   onFocusChord: (index: number | null) => void;
+  /** Enter "select notes to keep" (voicing) mode directly for this chord. */
+  onRefineChord: (index: number) => void;
 }
 
 /** All per-fretboard configuration controls. */
-export function FretboardControls({ fretboard: fb, onChange, focusedChordIndex, onFocusChord }: Props) {
+export function FretboardControls({ fretboard: fb, onChange, focusedChordIndex, onFocusChord, onRefineChord }: Props) {
   const parsedKey = fb.keyId ? parseKeyId(fb.keyId) : null;
 
   // Key selector uses a separate root + scale. Default key root to A.
@@ -236,6 +238,14 @@ export function FretboardControls({ fretboard: fb, onChange, focusedChordIndex, 
                   <span className="chord-chip__dot" style={{ background: color }} />
                   {chordDisplayName(entry.id, fb.preferFlats)}
                   {entry.keep && entry.keep.length > 0 && <span className="chord-chip__voiced" title="Custom voicing">◆</span>}
+                </button>
+                <button
+                  type="button"
+                  className="chord-chip__edit"
+                  title="Select notes to keep (voicing)"
+                  onClick={() => onRefineChord(idx)}
+                >
+                  ✎
                 </button>
                 <button type="button" className="chord-chip__x" title="Remove chord" onClick={() => removeChord(idx)}>
                   ×
