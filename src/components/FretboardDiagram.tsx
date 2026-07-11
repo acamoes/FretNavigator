@@ -41,7 +41,9 @@ export function FretboardDiagram({ fretboard, onCellClick, focusedChordIndex, re
       className="fretboard-svg"
       viewBox={`0 0 ${model.width} ${model.height}`}
       preserveAspectRatio="xMidYMid meet"
-      style={{ minWidth: model.width * 0.82 }}
+      // Keep a usable minimum width (scrolls) only in the interactive card; the
+      // read-only report lets the SVG scale down to fit the page — no scrollbar.
+      style={interactive ? { minWidth: model.width * 0.82 } : undefined}
       role="img"
       aria-label={`${fretboard.label} fretboard diagram`}
     >

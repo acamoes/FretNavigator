@@ -938,7 +938,7 @@ textarea:focus {
 .report__desc {
   color: var(--text-secondary);
   margin: var(--sm) 0 0;
-  font-size: 18px;
+  font-size: 14.4px; /* 20% smaller than the previous 18px */
 }
 .report__header {
   display: flex;
@@ -983,7 +983,8 @@ textarea:focus {
   color: var(--text-muted);
 }
 .report__fb-diagram {
-  overflow-x: auto;
+  /* SVG scales to fit (see FretboardDiagram) — never a horizontal scrollbar. */
+  overflow: hidden;
   margin-bottom: var(--sm);
 }
 
@@ -1165,11 +1166,43 @@ textarea:focus {
   }
   .report__sheet {
     border: none;
-    padding: 14mm 16mm;
+    padding: 12mm 14mm;
     box-shadow: none;
   }
+  .report__header {
+    margin-bottom: 6pt;
+    padding-bottom: 5pt;
+  }
+  .report__title {
+    font-size: 24px;
+  }
+  /* Compact each fretboard so four fit on one page. */
   .report__fretboard {
     break-inside: avoid;
     page-break-inside: avoid;
+    padding: 5pt 0;
+  }
+  .report__fb-head {
+    margin-bottom: 2pt;
+  }
+  .report__fb-title {
+    font-size: 16px;
+  }
+  .report__fb-diagram {
+    margin-bottom: 2pt;
+  }
+  /* height-capped + width-capped: scales to fit both, keeping aspect ratio. */
+  .report__fb-diagram .fretboard-svg {
+    width: auto;
+    height: 42mm;
+    max-width: 100%;
+    margin: 0 auto;
+  }
+  .progression--report {
+    gap: 4pt;
+  }
+  .progression--report .chord-chip__body {
+    font-size: 12px;
+    padding: 2px 8px;
   }
 }
