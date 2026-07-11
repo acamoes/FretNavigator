@@ -1137,9 +1137,11 @@ textarea:focus {
 
 /* ---------- Print ---------- */
 @media print {
-  /* margin: 0 suppresses the browser's own header/footer (page title, date,
-     URL/host:port). Content margins are restored via .report__sheet padding. */
+  /* size: A4 gives .report__page a fixed reference to compute a per-page
+     height from (needed so fretboards can flex to fill it exactly). margin: 0
+     suppresses the browser's own header/footer (page title, date, URL/host:port). */
   @page {
+    size: A4;
     margin: 0;
   }
   :root {
@@ -1166,18 +1168,53 @@ textarea:focus {
   }
   .report__sheet {
     border: none;
-    padding: 12mm 14mm;
+    /* Vertical padding lives on .report__page instead (see below): a block
+       that breaks across pages only gets its own padding-top before the
+       first fragment and padding-bottom after the last one, so pages in the
+       middle would otherwise end up with no vertical margin at all. */
+    padding: 0 14mm;
     box-shadow: none;
   }
+  /* One .report__page = one physical A4 page, holding at most
+     MAX_FRETBOARDS_PER_PAGE fretboards (see ReportView.tsx). Fixed height +
+     flex column lets .report__page-fretboards claim the space left after the
+     header and spread its fretboards evenly down it. The fretboard is a
+     wide/short shape (~3.85:1), so its size is bound by page WIDTH, not
+     height — each renders at full page width; the leftover vertical space
+     becomes even spacing rather than making them taller. */
+  .report__page {
+    display: flex;
+    flex-direction: column;
+    height: 297mm;
+    box-sizing: border-box;
+    padding: 12mm 0;
+    break-after: page;
+    page-break-after: always;
+  }
+  .report__page:last-child {
+    break-after: auto;
+    page-break-after: auto;
+  }
   .report__header {
+    flex: 0 0 auto;
     margin-bottom: 6pt;
     padding-bottom: 5pt;
   }
   .report__title {
     font-size: 24px;
   }
-  /* Compact each fretboard so four fit on one page. */
+  .report__page-fretboards {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-evenly;
+  }
+  /* Natural height (full-width diagram + head + chips). NOT flex: 1 — dividing
+     the page equally gave fretboards with chord rows a shorter diagram cell,
+     which then rendered narrower than the rest. */
   .report__fretboard {
+    flex: 0 0 auto;
     break-inside: avoid;
     page-break-inside: avoid;
     padding: 5pt 0;
@@ -1191,12 +1228,11 @@ textarea:focus {
   .report__fb-diagram {
     margin-bottom: 2pt;
   }
-  /* height-capped + width-capped: scales to fit both, keeping aspect ratio. */
+  /* Full page width, natural height (base .fretboard-svg rule). Identical for
+     every fretboard regardless of chords/header — the max size in portrait. */
   .report__fb-diagram .fretboard-svg {
-    width: auto;
-    height: 42mm;
-    max-width: 100%;
-    margin: 0 auto;
+    width: 100%;
+    height: auto;
   }
   .progression--report {
     gap: 4pt;

@@ -122,3 +122,64 @@ white-screened the whole app via `parseChordId(undefined)`.
 
 **Decision.** `App.tsx` holds a `view` state union (`dashboard | board | report`)
 and swaps components; no routing library.
+
+## 10. Report pagination: explicit page groups + flex fill (supersedes #6's diagram cap)
+**2026-07-11 · Accepted**
+
+**Context.** Entry #6's fixed `~42mm` diagram height was a guess: with 4
+fretboards on a page it left height unused, and with fewer it didn't grow to
+fill the extra space — no CSS rule knew *how many* fretboards shared a page,
+because they rendered as one continuous `.map()` with pagination left to the
+browser's automatic page-break logic.
+
+**Decision.** Pre-chunk `board.fretboards` into groups of at most 4 in JS
+(`chunk()` in `ReportView.tsx`) — the only reliable way to cap "4 per page"
+precisely. Each group renders inside a `.report__page` div. In `@media print`,
+declare `@page { size: A4; margin: 0 }` (size is new — needed as a fixed
+reference) and give `.report__page` a matching fixed height (297mm) with
+`display: flex; flex-direction: column`. Inside: the header (page 1 only) is
+`flex: 0 0 auto`; `.report__page-fretboards` is `flex: 1 1 auto` and claims
+whatever height is left; each `.report__fretboard` inside it is `flex: 1 1 0`,
+so the page's remaining height divides evenly by however many fretboards
+actually share that page. The diagram's `<svg>` is simply `width: 100%; height:
+100%` — `preserveAspectRatio="xMidYMid meet"` (already set in
+`FretboardDiagram.tsx`) contains the viewBox within that box, so it scales to
+fill the flex-allocated cell with no extra math. Refs: `ReportView.tsx`,
+`src/index.css` (`@media print`).
+
+**Consequences.** Vertical padding (12mm) moved from `.report__sheet` to
+`.report__page`: a block that fragments across printed pages only gets its own
+padding-top before the first fragment and padding-bottom after the last, so
+middle pages of one continuous `.report__sheet` would otherwise render with no
+vertical margin — each `.report__page` now carries its own. Horizontal padding
+(14mm) stays on `.report__sheet` (unaffected by fragmentation). The `size: A4`
+assumption means a printer fed US Letter will get browser-rescaled margins
+(layout stays correct, spacing shifts slightly) rather than an exact fit.
+
+## 11. Report fretboards: full width, not flex-filled (supersedes #10's equal division)
+**2026-07-11 · Accepted**
+
+**Context.** Entry #10 divided each page's height equally among its fretboards
+(`flex: 1 1 0`) and stretched each SVG to `height: 100%`, assuming fewer
+fretboards per page would render bigger. Two problems in practice: (a) the
+fretboard is a wide/short shape (viewBox ≈ 862×224 ≈ **3.85:1**), so at full
+page width its height maxes at ~47mm — extra vertical space can't make it taller,
+only adds letterbox whitespace, so "3 per page bigger than 4" never happened;
+(b) fretboards carrying a chord row (or on the header page) got a shorter
+diagram cell, and `preserveAspectRatio="xMidYMid meet"` then fit them by height
+→ they rendered visibly **narrower** than the rest.
+
+**Decision.** In portrait, render every report fretboard at **full page width,
+natural height** (`.report__fb-diagram .fretboard-svg { width: 100%; height:
+auto }` — the same rule the on-screen report uses) and give
+`.report__fretboard` its natural height (`flex: 0 0 auto`, not `flex: 1 1 0`).
+The page keeps its fixed A4 height and distributes the leftover vertical space
+with `justify-content: space-evenly` on `.report__page-fretboards`. Refs:
+`src/index.css` (`@media print`).
+
+**Consequences.** Every fretboard is identical width regardless of chords or the
+header (bug fixed), and as large as portrait allows. "Fewer per page" no longer
+means "bigger" — it means more even spacing (a fixed geometric limit, accepted
+by the user; landscape would be the only way to genuinely enlarge them). Edge
+case: four chord-heavy fretboards on the header page can slightly overflow
+(~13mm); if it bites, add a uniform `max-height` (~44mm) safety cap on the SVG.
