@@ -37,8 +37,11 @@ export function ReportView({ boardId, onBack }: Props) {
 
       <div className="report__sheet">
         <header className="report__header">
-          <h1 className="report__title">{board.name}</h1>
-          {board.description && <p className="report__desc">{board.description}</p>}
+          <div className="report__heading">
+            <h1 className="report__title">{board.name}</h1>
+            {board.description && <p className="report__desc">{board.description}</p>}
+          </div>
+          <img className="report__logo" src={`${import.meta.env.BASE_URL}logo.png`} alt="FretNavigator" />
         </header>
 
         {board.fretboards.map((fb) => (

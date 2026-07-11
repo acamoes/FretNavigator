@@ -941,9 +941,22 @@ textarea:focus {
   font-size: 18px;
 }
 .report__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--lg);
   border-bottom: 1px solid var(--border);
   padding-bottom: var(--md);
   margin-bottom: var(--lg);
+}
+.report__heading {
+  min-width: 0;
+}
+.report__logo {
+  height: 44px;
+  width: auto;
+  max-width: 240px;
+  flex-shrink: 0;
 }
 .report__fretboard {
   padding: var(--md) 0;
@@ -1123,6 +1136,11 @@ textarea:focus {
 
 /* ---------- Print ---------- */
 @media print {
+  /* margin: 0 suppresses the browser's own header/footer (page title, date,
+     URL/host:port). Content margins are restored via .report__sheet padding. */
+  @page {
+    margin: 0;
+  }
   :root {
     --canvas: #fff;
     --surface: #fff;
@@ -1147,7 +1165,7 @@ textarea:focus {
   }
   .report__sheet {
     border: none;
-    padding: 0;
+    padding: 14mm 16mm;
     box-shadow: none;
   }
   .report__fretboard {
