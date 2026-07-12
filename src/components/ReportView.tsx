@@ -1,8 +1,14 @@
 import { useBoard } from '../store/useStore';
 import { FretboardDiagram } from './FretboardDiagram';
-import { Fretboard } from '../types';
+import { StrummingDiagram } from './StrummingDiagram';
+import { Fretboard, StrummingPattern } from '../types';
 import { chordDisplayName, getTuning, noteName, parseKeyId } from '../music-theory';
 import { chordColor } from '../store/colorPresets';
+
+/** True if the pattern has at least one actual strum (not all rests). */
+function hasStrum(p: StrummingPattern | undefined): p is StrummingPattern {
+  return !!p && p.slots.some((s) => s.hit !== null);
+}
 
 interface Props {
   boardId: string;
@@ -56,6 +62,11 @@ export function ReportView({ boardId, onBack }: Props) {
                   <h1 className="report__title">{board.name}</h1>
                   {board.description && <p className="report__desc">{board.description}</p>}
                 </div>
+                {hasStrum(board.strumming) && (
+                  <div className="report__header-strum">
+                    <StrummingDiagram pattern={board.strumming} />
+                  </div>
+                )}
                 <img className="report__logo" src={`${import.meta.env.BASE_URL}logo.png`} alt="FretNavigator" />
               </header>
             )}

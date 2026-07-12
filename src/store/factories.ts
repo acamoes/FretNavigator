@@ -1,4 +1,13 @@
-import { Board, ChordEntry, Fretboard } from '../types';
+import { Board, ChordEntry, Fretboard, StrummingPattern } from '../types';
+
+/** A blank one-bar strumming pattern: 8 rest slots (1 & 2 & 3 & 4 &). */
+export function createStrummingPattern(): StrummingPattern {
+  return { slots: Array.from({ length: 8 }, () => ({ hit: null })) };
+}
+
+function cloneStrumming(p: StrummingPattern | undefined): StrummingPattern | undefined {
+  return p ? { slots: p.slots.map((s) => ({ ...s })) } : undefined;
+}
 
 /** Accept legacy string[] or ChordEntry[] and return a clean ChordEntry[]. */
 export function normalizeChords(raw: unknown): ChordEntry[] {
@@ -69,6 +78,7 @@ export function cloneBoard(board: Board, name?: string): Board {
     id: uid('board'),
     name: name ?? `${board.name} (copy)`,
     fretboards: board.fretboards.map((fb) => cloneFretboard(fb, fb.label)),
+    strumming: cloneStrumming(board.strumming),
     createdAt: now,
     updatedAt: now,
   };

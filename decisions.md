@@ -183,3 +183,25 @@ means "bigger" — it means more even spacing (a fixed geometric limit, accepted
 by the user; landscape would be the only way to genuinely enlarge them). Edge
 case: four chord-heavy fretboards on the header page can slightly overflow
 (~13mm); if it bites, add a uniform `max-height` (~44mm) safety cap on the SVG.
+
+## 12. Strumming pattern: board-level, optional field, shared pure SVG
+**2026-07-12 · Accepted**
+
+**Context.** Users want to record a song's strumming pattern (↓/↑, accent, bass
+note, mute) and print it like a standard strum chart. Confirmed scope: one 4/4
+bar of eighth notes (8 slots), one pattern per song, palette-brush input.
+
+**Decision.** Model a slot as `{ hit: 'down'|'up'|'bass'|'mute'|null; accent? }`
+— `hit`s are mutually exclusive glyph types (bass/mute are their own strokes,
+not direction modifiers), `accent` is the only modifier. `StrummingPattern`
+(8 `StrumSlot`s) lives on **`Board`** (`board.strumming?`), edited in
+`BoardView`'s header via `StrummingEditor` (a palette + interactive diagram) and
+shown once atop the report. Rendering is a shared pure component
+`StrummingDiagram` (SVG), interactive when given `onSlotClick` — mirroring
+`FretboardDiagram`/`onCellClick`.
+
+**Consequences.** The field is **optional and needs no schema bump**: absence =
+no pattern, `merge()` spreads it through on rehydration, `ioBoard` serializes the
+whole board, and `cloneBoard` deep-copies it — all without a migration. Not
+representable in v1 (deferred to `todo.md`): muted up/down-strokes, sixteenths
+(16 slots), and multi-bar patterns.

@@ -717,6 +717,97 @@ textarea:focus {
   font-size: 15px;
 }
 
+/* ---------- Strumming pattern ---------- */
+.strum {
+  margin-top: var(--md);
+}
+.strum__bar {
+  display: flex;
+  align-items: center;
+  gap: var(--sm);
+  flex-wrap: wrap;
+}
+.strum__label {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+}
+.strum__palette {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+.strum-tool {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 9px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-btn);
+  background: var(--surface);
+  font-family: var(--font);
+  font-size: 13px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: border-color 0.14s ease, background 0.14s ease, color 0.14s ease;
+}
+.strum-tool:hover {
+  border-color: var(--brown);
+}
+.strum-tool--active {
+  background: var(--brown);
+  border-color: var(--brown);
+  color: #fff;
+}
+.strum-tool__glyph {
+  font-size: 15px;
+  line-height: 1;
+}
+.strum__preview {
+  margin-top: var(--sm);
+  max-width: 520px;
+}
+
+/* Shared SVG notation (editor preview + report). */
+.strum-svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  color: var(--ink);
+}
+.strum-svg__glyph line {
+  stroke: currentColor;
+  stroke-width: 3;
+  stroke-linecap: round;
+}
+.strum-svg__accent {
+  stroke: currentColor;
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.strum-svg__bracket {
+  stroke: var(--text-muted);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.strum-svg__count {
+  fill: var(--text-secondary);
+  font-family: var(--font);
+  font-size: 15px;
+  font-weight: 600;
+}
+.strum-svg__hit {
+  fill: transparent;
+  cursor: pointer;
+}
+.strum-svg__hit:hover {
+  fill: rgba(83, 65, 60, 0.07);
+}
+
 /* ---------- Note brush ---------- */
 .brush {
   display: flex;
@@ -943,14 +1034,23 @@ textarea:focus {
 .report__header {
   display: flex;
   align-items: flex-start;
-  justify-content: space-between;
   gap: var(--lg);
   border-bottom: 1px solid var(--border);
   padding-bottom: var(--md);
   margin-bottom: var(--lg);
 }
 .report__heading {
+  /* Grows to fill, shrinks so the description wraps and leaves room for the
+     mini strumming + logo on the right. */
+  flex: 1 1 auto;
   min-width: 0;
+}
+/* Small strumming pattern tucked top-right, just left of the logo. Tweak the
+   width to taste (the inner SVG is width:100%, height:auto). */
+.report__header-strum {
+  flex: 0 0 auto;
+  align-self: flex-start;
+  width: 220px;
 }
 .report__logo {
   height: 44px;

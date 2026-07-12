@@ -56,11 +56,27 @@ export interface Fretboard {
   selectedNotes: SelectedNote[];
 }
 
+/** A single strum in a bar. `null` hit = a rest (no strum on that eighth). */
+export type StrumHit = 'down' | 'up' | 'bass' | 'mute';
+
+export interface StrumSlot {
+  hit: StrumHit | null;
+  /** Accent mark (>) above the strum. */
+  accent?: boolean;
+}
+
+/** One 4/4 bar of eighth notes: exactly 8 slots (1 & 2 & 3 & 4 &). */
+export interface StrummingPattern {
+  slots: StrumSlot[];
+}
+
 export interface Board {
   id: string;
   name: string;
   description?: string;
   fretboards: Fretboard[];
+  /** Optional strumming pattern for the song (shown once at the top of the report). */
+  strumming?: StrummingPattern;
   createdAt: number;
   updatedAt: number;
 }

@@ -1,6 +1,7 @@
 import { useBoard, useStore } from '../store/useStore';
 import { downloadBoard } from '../store/ioBoard';
 import { FretboardCard } from './FretboardCard';
+import { StrummingEditor } from './StrummingEditor';
 
 interface Props {
   boardId: string;
@@ -55,6 +56,7 @@ export function BoardView({ boardId, onBack, onReport }: Props) {
           rows={2}
           onChange={(e) => updateBoardMeta(board.id, { description: e.target.value })}
         />
+        <StrummingEditor board={board} />
       </header>
 
       <div className="board-view__fretboards">

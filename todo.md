@@ -11,3 +11,5 @@ _Last updated: 2026-07-11_
       looks right on GitHub's dark theme (current `public/logo.png` is white).
 - [ ] _(Optional)_ **Unit test for schema migration + `normalizeChords`** to lock
       in the localStorage self-heal against regressions.
+- [ ] _(Optional)_ **Strumming pattern extensions** — sixteenth notes (16 slots),
+      multi-bar patterns, and muted up/down-strokes (see [decisions.md #12](decisions.md)).
