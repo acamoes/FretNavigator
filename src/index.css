@@ -182,13 +182,20 @@ h3 {
   white-space: nowrap;
   max-width: 42vw;
 }
-.app-header__tag {
+.app-header__github {
   margin-left: auto;
-  font-size: 12px;
-  font-weight: 500;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
   color: var(--text-muted);
+  transition: color 0.14s ease, background 0.14s ease;
+}
+.app-header__github:hover {
+  color: var(--ink);
+  background: var(--surface-2);
 }
 
 /* ---------- Buttons ---------- */
@@ -1258,6 +1265,14 @@ textarea:focus {
   }
   body {
     background: #fff;
+    /* Chrome strips CSS background-color by default when printing/saving as
+       PDF (only borders + SVG fill survive) — this is why chord-legend dots
+       (a <span> colored via CSS background) rendered as hollow rings while
+       the fretboard's SVG note circles (colored via the fill attribute)
+       printed fine. Force backgrounds to print; the property is inherited,
+       so setting it on body covers every colored chip/dot in the report. */
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
   }
   .no-print {
     display: none !important;
