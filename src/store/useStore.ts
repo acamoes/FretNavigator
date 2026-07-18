@@ -20,7 +20,7 @@ interface StoreState {
   importBoard: (board: Board) => string;
   deleteBoard: (boardId: string) => void;
   duplicateBoard: (boardId: string) => string | null;
-  updateBoardMeta: (boardId: string, patch: Partial<Pick<Board, 'name' | 'description' | 'strumming'>>) => void;
+  updateBoardMeta: (boardId: string, patch: Partial<Pick<Board, 'name' | 'description' | 'strumming' | 'bpm'>>) => void;
 
   // Section-level actions
   addTab: (boardId: string) => void;

@@ -67,6 +67,7 @@ export function ReportView({ boardId, onBack }: Props) {
       <div className="report__heading">
         <h1 className="report__title">{board.name}</h1>
         {board.description && <p className="report__desc">{board.description}</p>}
+        {board.bpm ? <p className="report__tempo">♩ = {board.bpm} BPM</p> : null}
       </div>
       {hasStrum(board.strumming) && (
         <div className="report__header-strum">

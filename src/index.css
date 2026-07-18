@@ -471,6 +471,16 @@ textarea:focus {
 .board-view__add {
   margin-top: var(--lg);
 }
+.board-view__bpm {
+  max-width: 160px;
+  margin-top: var(--sm);
+}
+.report__tempo {
+  margin: var(--xs) 0 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
 
 /* ---------- Fretboard card ---------- */
 .fb-card {

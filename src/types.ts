@@ -97,6 +97,8 @@ export interface Board {
   id: string;
   name: string;
   description?: string;
+  /** Song tempo in beats per minute (optional). */
+  bpm?: number;
   /** Ordered sections: fretboards and tabs, freely interleaved. */
   sections: Section[];
   /** Optional strumming pattern for the song (shown once at the top of the report). */

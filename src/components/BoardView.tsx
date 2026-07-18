@@ -58,6 +58,21 @@ export function BoardView({ boardId, onBack, onReport }: Props) {
           rows={2}
           onChange={(e) => updateBoardMeta(board.id, { description: e.target.value })}
         />
+        <label className="field board-view__bpm">
+          <span>Tempo (BPM)</span>
+          <input
+            type="number"
+            min={20}
+            max={400}
+            inputMode="numeric"
+            placeholder="—"
+            value={board.bpm ?? ''}
+            onChange={(e) => {
+              const v = e.target.value.trim();
+              updateBoardMeta(board.id, { bpm: v === '' ? undefined : Number(v) });
+            }}
+          />
+        </label>
         <StrummingEditor board={board} />
       </header>
 
