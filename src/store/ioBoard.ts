@@ -18,8 +18,10 @@ export function deserializeBoard(json: string): Board {
   if (!data || data.kind !== 'fretnavigator-board' || typeof data.board !== 'object' || data.board === null) {
     throw new Error('Not a valid FretNavigator board file.');
   }
-  const board = data.board as Board;
-  if (typeof board.name !== 'string' || !Array.isArray(board.fretboards)) {
+  const board = data.board as Board & { fretboards?: unknown };
+  // Accept current files (sections) and older exports (fretboards); cloneBoard
+  // normalizes either into `sections` on import.
+  if (typeof board.name !== 'string' || (!Array.isArray(board.sections) && !Array.isArray(board.fretboards))) {
     throw new Error('Board file is missing required fields.');
   }
   return board;

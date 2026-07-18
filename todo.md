@@ -13,3 +13,6 @@ _Last updated: 2026-07-11_
       in the localStorage self-heal against regressions.
 - [ ] _(Optional)_ **Strumming pattern extensions** — sixteenth notes (16 slots),
       multi-bar patterns, and muted up/down-strokes (see [decisions.md #12](decisions.md)).
+- [ ] _(Optional)_ **Tab extensions** — techniques (hammer-on/pull-off/slide/bend)
+      and rhythm/duration; also revisit whether tabs should be able to share a
+      printed page with fretboards (see [decisions.md #13](decisions.md)).

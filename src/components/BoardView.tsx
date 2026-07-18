@@ -1,6 +1,7 @@
 import { useBoard, useStore } from '../store/useStore';
 import { downloadBoard } from '../store/ioBoard';
 import { FretboardCard } from './FretboardCard';
+import { TabCard } from './TabCard';
 import { StrummingEditor } from './StrummingEditor';
 
 interface Props {
@@ -14,6 +15,7 @@ export function BoardView({ boardId, onBack, onReport }: Props) {
   const board = useBoard(boardId);
   const updateBoardMeta = useStore((s) => s.updateBoardMeta);
   const addFretboard = useStore((s) => s.addFretboard);
+  const addTab = useStore((s) => s.addTab);
 
   if (!board) {
     return (
@@ -60,14 +62,21 @@ export function BoardView({ boardId, onBack, onReport }: Props) {
       </header>
 
       <div className="board-view__fretboards">
-        {board.fretboards.map((fb, i) => (
-          <FretboardCard key={fb.id} board={board} fretboard={fb} index={i} total={board.fretboards.length} />
-        ))}
+        {board.sections.map((section, i) =>
+          section.kind === 'fretboard' ? (
+            <FretboardCard key={section.id} board={board} fretboard={section} index={i} total={board.sections.length} />
+          ) : (
+            <TabCard key={section.id} board={board} tab={section} index={i} total={board.sections.length} />
+          ),
+        )}
       </div>
 
       <div className="board-view__add no-print">
         <button className="btn btn--primary" onClick={() => addFretboard(board.id)}>
           + Add fretboard
+        </button>
+        <button className="btn btn--ghost" onClick={() => addTab(board.id)}>
+          + Add tab
         </button>
       </div>
     </div>

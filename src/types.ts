@@ -37,6 +37,8 @@ export interface ChordEntry {
 }
 
 export interface Fretboard {
+  /** Discriminant for the heterogeneous `Board.sections` list. */
+  kind: 'fretboard';
   id: string;
   label: string;
   /** Tuning id from music-theory TUNINGS. */
@@ -70,11 +72,33 @@ export interface StrummingPattern {
   slots: StrumSlot[];
 }
 
+/** One time column of a tab: a fret per string (null = string not played). */
+export interface TabColumn {
+  /** Indexed by stringIndex (0 = lowest string), like SelectedNote. */
+  frets: (number | null)[];
+  /** Draw a barline immediately before this column. */
+  bar?: boolean;
+}
+
+/** A guitar tablature section (a solo written as fret numbers over time). */
+export interface TabSection {
+  kind: 'tab';
+  id: string;
+  label: string;
+  /** Tuning id from music-theory TUNINGS (determines the number of strings). */
+  tuningId: string;
+  columns: TabColumn[];
+}
+
+/** A board holds an ordered, heterogeneous list of these. */
+export type Section = Fretboard | TabSection;
+
 export interface Board {
   id: string;
   name: string;
   description?: string;
-  fretboards: Fretboard[];
+  /** Ordered sections: fretboards and tabs, freely interleaved. */
+  sections: Section[];
   /** Optional strumming pattern for the song (shown once at the top of the report). */
   strumming?: StrummingPattern;
   createdAt: number;
@@ -87,4 +111,4 @@ export interface PersistedState {
   boards: Board[];
 }
 
-export const SCHEMA_VERSION = 3;
+export const SCHEMA_VERSION = 4;

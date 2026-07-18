@@ -82,7 +82,9 @@ export function Dashboard({ onOpenBoard }: Props) {
                 )}
               </div>
               <div className="board-card__meta">
-                <span>{board.fretboards.length} fretboard{board.fretboards.length === 1 ? '' : 's'}</span>
+                <span>
+                  {board.sections.length} section{board.sections.length === 1 ? '' : 's'}
+                </span>
                 <span>· {new Date(board.updatedAt).toLocaleDateString()}</span>
               </div>
               <div className="board-card__actions" onClick={(e) => e.stopPropagation()}>

@@ -1,7 +1,8 @@
 import { useBoard } from '../store/useStore';
 import { FretboardDiagram } from './FretboardDiagram';
 import { StrummingDiagram } from './StrummingDiagram';
-import { Fretboard, StrummingPattern } from '../types';
+import { TabDiagram } from './TabDiagram';
+import { Fretboard, Section, StrummingPattern, TabSection } from '../types';
 import { chordDisplayName, getTuning, noteName, parseKeyId } from '../music-theory';
 import { chordColor } from '../store/colorPresets';
 
@@ -17,11 +18,31 @@ interface Props {
 
 const MAX_FRETBOARDS_PER_PAGE = 4;
 
-/** Split into groups of at most `size`, preserving order. */
-function chunk<T>(items: T[], size: number): T[][] {
-  const groups: T[][] = [];
-  for (let i = 0; i < items.length; i += size) groups.push(items.slice(i, i + size));
-  return groups;
+/** A page of up to 4 consecutive fretboards, or a single tab flowing on its own. */
+type ReportBlock = { type: 'fretboards'; items: Fretboard[] } | { type: 'tab'; tab: TabSection };
+
+/** Group sections in order: runs of fretboards into pages of <=4; tabs stand alone. */
+function toBlocks(sections: Section[]): ReportBlock[] {
+  const blocks: ReportBlock[] = [];
+  let buf: Fretboard[] = [];
+  const flush = () => {
+    if (buf.length) {
+      blocks.push({ type: 'fretboards', items: buf });
+      buf = [];
+    }
+  };
+  for (const s of sections) {
+    if (s.kind === 'fretboard') {
+      buf.push(s);
+      if (buf.length === MAX_FRETBOARDS_PER_PAGE) flush();
+    } else {
+      flush();
+      blocks.push({ type: 'tab', tab: s });
+    }
+  }
+  flush();
+  if (blocks.length === 0) blocks.push({ type: 'fretboards', items: [] }); // header-only
+  return blocks;
 }
 
 /** Consolidated, print-ready view of every fretboard in the board. */
@@ -39,8 +60,22 @@ export function ReportView({ boardId, onBack }: Props) {
     );
   }
 
-  // At least one page so the header always renders, even with zero fretboards.
-  const pages: Fretboard[][] = board.fretboards.length > 0 ? chunk(board.fretboards, MAX_FRETBOARDS_PER_PAGE) : [[]];
+  const blocks = toBlocks(board.sections);
+
+  const header = (
+    <header className="report__header">
+      <div className="report__heading">
+        <h1 className="report__title">{board.name}</h1>
+        {board.description && <p className="report__desc">{board.description}</p>}
+      </div>
+      {hasStrum(board.strumming) && (
+        <div className="report__header-strum">
+          <StrummingDiagram pattern={board.strumming} />
+        </div>
+      )}
+      <img className="report__logo" src={`${import.meta.env.BASE_URL}logo.png`} alt="FretNavigator" />
+    </header>
+  );
 
   return (
     <div className="report">
@@ -54,54 +89,56 @@ export function ReportView({ boardId, onBack }: Props) {
       </div>
 
       <div className="report__sheet">
-        {pages.map((pageFretboards, pageIndex) => (
-          <div key={pageIndex} className="report__page">
-            {pageIndex === 0 && (
-              <header className="report__header">
-                <div className="report__heading">
-                  <h1 className="report__title">{board.name}</h1>
-                  {board.description && <p className="report__desc">{board.description}</p>}
+        {blocks.map((block, bi) => {
+          const brk = bi > 0 ? ' report__block--break' : '';
+          if (block.type === 'tab') {
+            const tuning = getTuning(block.tab.tuningId);
+            return (
+              <div className={`report__tab${brk}`} key={bi}>
+                {bi === 0 && header}
+                <div className="report__fb-head">
+                  <h2 className="report__fb-title">{block.tab.label}</h2>
+                  <span className="report__fb-config">tab · {tuning?.labels.join(' ')}</span>
                 </div>
-                {hasStrum(board.strumming) && (
-                  <div className="report__header-strum">
-                    <StrummingDiagram pattern={board.strumming} />
-                  </div>
-                )}
-                <img className="report__logo" src={`${import.meta.env.BASE_URL}logo.png`} alt="FretNavigator" />
-              </header>
-            )}
-
-            <div className="report__page-fretboards">
-              {pageFretboards.map((fb) => (
-                <section key={fb.id} className="report__fretboard">
-                  <div className="report__fb-head">
-                    <h2 className="report__fb-title">{fb.label}</h2>
-                    <span className="report__fb-config">{describe(fb)}</span>
-                  </div>
-                  <div className="report__fb-diagram">
-                    <FretboardDiagram fretboard={fb} />
-                  </div>
-                  {fb.chords.length > 0 && (
-                    <div className="progression progression--report">
-                      {fb.chords.map((entry, idx) => (
-                        <span
-                          key={`${entry.id}-${idx}`}
-                          className="chord-chip"
-                          style={{ borderColor: chordColor(idx) }}
-                        >
-                          <span className="chord-chip__body">
-                            <span className="chord-chip__dot" style={{ background: chordColor(idx) }} />
-                            {chordDisplayName(entry.id, fb.preferFlats)}
-                          </span>
-                        </span>
-                      ))}
+                <TabDiagram tab={block.tab} colsPerSystem={24} />
+              </div>
+            );
+          }
+          return (
+            <div className={`report__page${brk}`} key={bi}>
+              {bi === 0 && header}
+              <div className="report__page-fretboards">
+                {block.items.map((fb) => (
+                  <section key={fb.id} className="report__fretboard">
+                    <div className="report__fb-head">
+                      <h2 className="report__fb-title">{fb.label}</h2>
+                      <span className="report__fb-config">{describe(fb)}</span>
                     </div>
-                  )}
-                </section>
-              ))}
+                    <div className="report__fb-diagram">
+                      <FretboardDiagram fretboard={fb} />
+                    </div>
+                    {fb.chords.length > 0 && (
+                      <div className="progression progression--report">
+                        {fb.chords.map((entry, idx) => (
+                          <span
+                            key={`${entry.id}-${idx}`}
+                            className="chord-chip"
+                            style={{ borderColor: chordColor(idx) }}
+                          >
+                            <span className="chord-chip__body">
+                              <span className="chord-chip__dot" style={{ background: chordColor(idx) }} />
+                              {chordDisplayName(entry.id, fb.preferFlats)}
+                            </span>
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </section>
+                ))}
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );

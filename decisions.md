@@ -205,3 +205,32 @@ no pattern, `merge()` spreads it through on rehydration, `ioBoard` serializes th
 whole board, and `cloneBoard` deep-copies it — all without a migration. Not
 representable in v1 (deferred to `todo.md`): muted up/down-strokes, sixteenths
 (16 slots), and multi-bar patterns.
+
+## 13. Heterogeneous sections + tab (tablature) sections
+**2026-07-12 · Accepted**
+
+**Context.** Solos are better shown as tablature (fret numbers over time) than as
+fretboard dots. Users want a tab freely ordered among fretboards (e.g. Rhythm →
+Solo(tab) → Rhythm).
+
+**Decision.** `Board.fretboards: Fretboard[]` became `Board.sections: Section[]`
+where `Section = Fretboard | TabSection`, each tagged with `kind`
+(`'fretboard'`/`'tab'`). A `TabSection` is one bar-agnostic sequence of
+`TabColumn { frets: (number|null)[]; bar? }` (fret per string; `bar` = barline
+before the column). Rendering is the shared pure `TabDiagram` (HTML/CSS, not SVG
+— easier number alignment + focusable cells), interactive via `onCellClick`;
+`TabCard` adds keyboard entry (digits with two-digit combine ≤24, arrows, space,
+`|`) plus fretboard-click input (reusing `FretboardDiagram`). Store: generic
+section ops (delete/duplicate/move by id) work for any kind; `mapFretboard`/
+`mapTab` narrow by kind; `addTab` + `updateTab` added. Migration: `SCHEMA_VERSION`
+→ 4, but the real work is in `merge()` + `normalizeSections()` (reads legacy
+`fretboards` or `sections` on every load, self-healing).
+
+**Consequences (report pagination — revisits #10/#11).** Fretboard pages assumed
+uniform heights (fixed A4 page, 4 per page). Tabs have variable height, so the
+report now builds ordered **blocks**: runs of ≤4 fretboards render as the tuned
+fixed-height pages; each tab flows at natural height. Every block after the first
+gets `break-before: page` (`.report__block--break`), so tabs get their own
+page(s) — order is preserved and the fretboard layout is untouched, at the cost
+of a tab never sharing a page with a fretboard (accepted; "hybrid" option B).
+Deferred to `todo.md`: techniques (h/p//b) and rhythm/duration.
