@@ -4,6 +4,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project docs
 
+- **`architecture.md`** — the file map: layers, what each main file does, where
+  tests live, and a rendered dependency diagram (+ `architecture.dot` Graphviz).
 - **`decisions.md`** — the *why* behind non-obvious choices (chord schema
   migrations, keep/refine as transient state, Pages base path, print CSS…).
   Read it before changing the data model or persistence.

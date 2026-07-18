@@ -1,0 +1,133 @@
+// FretNavigator — code architecture.
+// Render:  dot -Tsvg architecture.dot -o architecture.svg
+// Or paste into https://dreampuf.github.io/GraphvizOnline or https://edotor.net
+//
+// Arrows read "imports / uses". Dependency direction flows downward:
+// UI  ->  State + Persistence  ->  Pure logic. The pure logic never imports UI.
+
+digraph FretNavigator {
+  rankdir=TB;
+  compound=true;
+  labelloc="t";
+  fontname="Helvetica";
+  fontsize=16;
+  label="FretNavigator — code architecture (client-only React app; arrows = imports/uses)";
+
+  node [shape=box, style="rounded,filled", fontname="Helvetica", fontsize=10, color="#7a6f69", penwidth=1.1];
+  edge [color="#9a8f88", fontname="Helvetica", fontsize=8, arrowsize=0.7];
+
+  // ---------------- Entry / shell ----------------
+  subgraph cluster_shell {
+    label="Entry / Shell";
+    fontname="Helvetica-Bold"; style="rounded,filled"; color="#efe9e3";
+    node [fillcolor="#f7f2ed"];
+    main   [label="main.tsx\nReact bootstrap"];
+    eb     [label="ErrorBoundary.tsx"];
+    app    [label="App.tsx\nview: dashboard|board|report\n(no router)"];
+    header [label="AppHeader.tsx"];
+  }
+
+  // ---------------- UI / Frontend ----------------
+  subgraph cluster_ui {
+    label="UI / Frontend  (src/components)";
+    fontname="Helvetica-Bold"; style="rounded,filled"; color="#e6eef3";
+    node [fillcolor="#f2f7fa"];
+    dash  [label="Dashboard.tsx"];
+    bv    [label="BoardView.tsx"];
+    rv    [label="ReportView.tsx\nprint · hybrid paging"];
+    fc    [label="FretboardCard.tsx"];
+    fctrl [label="FretboardControls.tsx"];
+    fd    [label="FretboardDiagram.tsx\nSVG render (shared)"];
+    nb    [label="NoteBrush.tsx"];
+    se    [label="StrummingEditor.tsx"];
+    sd    [label="StrummingDiagram.tsx"];
+    tc    [label="TabCard.tsx"];
+    td    [label="TabDiagram.tsx\nHTML render"];
+    il    [label="IntervalLegend.tsx\n(orphan / unused)", fillcolor="#f2e5e4", color="#b23a2e", style="rounded,filled,dashed"];
+  }
+
+  // ---------------- Pure logic ----------------
+  subgraph cluster_logic {
+    label="Pure logic  (no React, unit-tested)";
+    fontname="Helvetica-Bold"; style="rounded,filled"; color="#e7f0e5";
+    node [fillcolor="#f1f7ef"];
+    fl [label="fretboardLayout.ts\nbuildFretboardModel()\n(pure geometry + highlights)"];
+    mt [label="music-theory/\nnotes · intervals · scales\nchords · fretboard (tunings)"];
+  }
+
+  // ---------------- State + persistence ----------------
+  subgraph cluster_state {
+    label="State + Persistence  (no backend)";
+    fontname="Helvetica-Bold"; style="rounded,filled"; color="#f3ebe0";
+    node [fillcolor="#faf3e9"];
+    store [label="useStore.ts\nZustand + persist\nmigrate() / merge()"];
+    fact  [label="factories.ts\ncreate / clone / normalize"];
+    io    [label="ioBoard.ts\nJSON import / export"];
+    cp    [label="colorPresets.ts"];
+    ls    [label="localStorage", shape=cylinder, fillcolor="#eaddca"];
+  }
+
+  types [label="types.ts\nBoard · Section\nFretboard · TabSection · ...", shape=note, fillcolor="#fdf6df", color="#c7a53a"];
+
+  // ---------------- Tests ----------------
+  subgraph cluster_tests {
+    label="Tests  (Vitest)";
+    fontname="Helvetica-Bold"; style="rounded,dashed"; color="#b9b0a8";
+    node [fillcolor="#f0edea"];
+    t1 [label="music-theory.test.ts"];
+    t2 [label="fretboardLayout.test.ts"];
+    t3 [label="factories.test.ts"];
+  }
+
+  // ---------------- Edges: shell ----------------
+  main -> eb -> app;
+  app -> header;
+  app -> dash;
+  app -> bv;
+  app -> rv;
+
+  // ---------------- Edges: UI composition ----------------
+  bv -> se;
+  bv -> fc;
+  bv -> tc;
+  fc -> fctrl;
+  fc -> fd;
+  fc -> nb;
+  se -> sd;
+  tc -> td;
+  tc -> fd;
+  rv -> fd;
+  rv -> td;
+  rv -> sd;
+
+  // ---------------- Edges: UI -> logic / state ----------------
+  fd -> fl;
+  fl -> mt;
+  fl -> cp;
+  fctrl -> mt;
+  tc -> mt;
+  td -> mt;
+  sd -> mt;
+  dash -> store;
+  dash -> io;
+  bv -> store;
+  fc -> store;
+  fctrl -> store;
+  se -> store;
+  tc -> store;
+  rv -> store;
+
+  // ---------------- Edges: state internals ----------------
+  store -> fact;
+  store -> ls;
+  fact -> mt;
+  io -> types;
+  store -> types;
+  fl -> types;
+
+  // ---------------- Edges: tests (dashed, "covers") ----------------
+  edge [style=dashed, arrowhead=empty, color="#b9b0a8"];
+  t1 -> mt;
+  t2 -> fl;
+  t3 -> fact;
+}
