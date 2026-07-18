@@ -101,7 +101,8 @@ export function ReportView({ boardId, onBack }: Props) {
                   <h2 className="report__fb-title">{block.tab.label}</h2>
                   <span className="report__fb-config">tab · {tuning?.labels.join(' ')}</span>
                 </div>
-                <TabDiagram tab={block.tab} colsPerSystem={24} />
+                {/* Compact PDF density; wraps to the A4 page width, not the screen. */}
+                <TabDiagram tab={block.tab} variant="print" />
               </div>
             );
           }
