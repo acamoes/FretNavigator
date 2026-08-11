@@ -298,6 +298,11 @@ textarea:focus {
 .field--narrow select {
   width: 74px;
 }
+/* Tuning names are long ("Standard (E A D G B E)"), so they need more room than
+   the numeric --narrow fields — but not the width of the longest option. */
+.field--tuning select {
+  width: 210px;
+}
 .field--check {
   flex-direction: row;
   align-items: center;
@@ -851,6 +856,8 @@ textarea:focus {
 .tab-editor__grid {
   overflow-x: auto;
   padding: var(--sm);
+  /* Room for a label on the last column, which overflows to the right. */
+  padding-right: var(--md);
   border-radius: var(--r-btn);
   outline: none;
 }
@@ -944,6 +951,70 @@ textarea:focus {
 .tab-cell--cursor {
   box-shadow: inset 0 0 0 2px var(--brown);
   border-radius: 3px;
+}
+
+/* Annotation row: chord/note names above the staff. Text is anchored to its
+   column and allowed to overflow right (like printed tab), so the grid metrics
+   in TabDiagram stay the single source of truth. */
+.tab-row--annot {
+  height: calc(var(--tab-row-h, 24px) * 0.9);
+}
+.tab-annot-cell::before {
+  content: none; /* no string line above the staff */
+}
+.tab-annot {
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  white-space: nowrap;
+  z-index: 2;
+  font-size: calc(var(--tab-font, 14px) * 0.92);
+  font-weight: 600;
+  color: var(--text-secondary);
+  pointer-events: none;
+}
+.tab-annot-input {
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 3;
+  width: 92px;
+  padding: 0 4px;
+  font-family: var(--font);
+  font-size: calc(var(--tab-font, 14px) * 0.92);
+  font-weight: 600;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: 4px;
+}
+.tab--interactive .tab-annot-cell:not(.tab-cell--filler) {
+  cursor: text;
+}
+.tab--interactive .tab-annot-cell:not(.tab-cell--filler):hover::after {
+  content: '';
+  position: absolute;
+  inset: 2px 0;
+  border-bottom: 1px dashed var(--border);
+}
+
+/* Hammer-on / pull-off slur: an arc from this cell's centre to the next one's
+   (one cell width apart). Metrics come from TabDiagram's size preset. */
+.tab-slur {
+  position: absolute;
+  left: 50%;
+  width: 100%;
+  height: var(--tab-slur-h, 5px);
+  bottom: calc(50% + var(--tab-slur-gap, 6px));
+  border-top: 1.5px solid var(--text-secondary);
+  border-radius: 50% 50% 0 0 / 100% 100% 0 0;
+  pointer-events: none;
+  z-index: 2;
+}
+.tab--print .tab-slur {
+  border-top-width: 1px;
 }
 
 /* ---------- Note brush ---------- */

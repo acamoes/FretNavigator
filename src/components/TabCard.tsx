@@ -23,6 +23,8 @@ export function TabCard({ board, tab, index, total }: Props) {
 
   const numStrings = getTuning(tab.tuningId)?.strings.length ?? 6;
   const [cursor, setCursor] = useState<{ col: number; si: number }>({ col: 0, si: numStrings - 1 });
+  // Which column's label is being typed right now (transient, like the cursor).
+  const [annotEdit, setAnnotEdit] = useState<number | null>(null);
   const combineCell = useRef<string | null>(null);
 
   const commit = (columns: TabSection['columns']) => updateTab(board.id, tab.id, { columns });
@@ -37,14 +39,34 @@ export function TabCard({ board, tab, index, total }: Props) {
   const toggleBar = (col: number) => {
     commit(tab.columns.map((c, i) => (i === col ? { ...c, bar: c.bar ? undefined : true } : c)));
   };
+  const setAnnotation = (col: number, value: string) => {
+    commit(tab.columns.map((c, i) => (i === col ? { ...c, annotation: value.trim() ? value : undefined } : c)));
+  };
+  /** Tie this cell to the next column on the same string (hammer-on / pull-off). */
+  const toggleSlur = (col: number, si: number) => {
+    if (col >= tab.columns.length - 1) return; // nothing to tie to
+    commit(
+      tab.columns.map((c, i) => {
+        if (i !== col) return c;
+        const next = c.slurs?.includes(si)
+          ? c.slurs.filter((s) => s !== si)
+          : [...(c.slurs ?? []), si].sort((a, b) => a - b);
+        return { ...c, slurs: next.length ? next : undefined };
+      }),
+    );
+  };
   const removeColumn = (col: number) => {
     if (tab.columns.length <= 1) return;
-    commit(tab.columns.filter((_, i) => i !== col));
+    // The previous column's slurs pointed at the column being removed; drop them
+    // so no arc is left tying two notes that were never neighbours.
+    const kept = tab.columns.filter((_, i) => i !== col);
+    commit(kept.map((c, i) => (i === col - 1 ? { ...c, slurs: undefined } : c)));
     setCursor((c) => ({ col: Math.max(0, Math.min(c.col, tab.columns.length - 2)), si: c.si }));
   };
 
   const moveCursor = (col: number, si: number) => {
     setCursor({ col, si });
+    setAnnotEdit(null);
     combineCell.current = null;
   };
 
@@ -97,6 +119,14 @@ export function TabCard({ board, tab, index, total }: Props) {
         e.preventDefault();
         toggleBar(col);
         break;
+      // Both keys do the same thing: hammer-on vs pull-off is read off the frets.
+      case 'h':
+      case 'H':
+      case 'p':
+      case 'P':
+        e.preventDefault();
+        toggleSlur(col, si);
+        break;
       default:
         break;
     }
@@ -110,7 +140,14 @@ export function TabCard({ board, tab, index, total }: Props) {
 
   const changeTuning = (newId: string) => {
     const n = getTuning(newId)?.strings.length ?? 6;
-    const columns = tab.columns.map((c) => ({ ...c, frets: Array.from({ length: n }, (_, k) => c.frets[k] ?? null) }));
+    const columns = tab.columns.map((c) => {
+      const slurs = c.slurs?.filter((s) => s < n); // drop ties to strings that no longer exist
+      return {
+        ...c,
+        frets: Array.from({ length: n }, (_, k) => c.frets[k] ?? null),
+        slurs: slurs?.length ? slurs : undefined,
+      };
+    });
     updateTab(board.id, tab.id, { tuningId: newId, columns });
     setCursor((c) => ({ col: c.col, si: Math.min(c.si, n - 1) }));
   };
@@ -167,7 +204,7 @@ export function TabCard({ board, tab, index, total }: Props) {
       </header>
 
       <div className="tab-editor__controls no-print">
-        <label className="field field--narrow">
+        <label className="field field--tuning">
           <span>Tuning</span>
           <select value={tab.tuningId} onChange={(e) => changeTuning(e.target.value)}>
             {TUNINGS.map((t) => (
@@ -183,11 +220,18 @@ export function TabCard({ board, tab, index, total }: Props) {
         <button type="button" className="btn btn--ghost btn--sm" onClick={() => toggleBar(cursor.col)}>
           Barline
         </button>
+        <button type="button" className="btn btn--ghost btn--sm" onClick={() => toggleSlur(cursor.col, cursor.si)}>
+          Hammer / Pull
+        </button>
+        <button type="button" className="btn btn--ghost btn--sm" onClick={() => setAnnotEdit(cursor.col)}>
+          Label
+        </button>
         <button type="button" className="btn btn--ghost btn--sm" onClick={() => removeColumn(cursor.col)}>
           Remove column
         </button>
         <span className="tab-editor__hint">
-          Type numbers · ← → move · ↑ ↓ string · space = next · <kbd>|</kbd> barline · backspace clears
+          Type numbers · ← → move · ↑ ↓ string · space = next · <kbd>|</kbd> barline · <kbd>h</kbd> hammer/pull ·
+          backspace clears · click above a column to name the chord
         </span>
       </div>
 
@@ -198,7 +242,18 @@ export function TabCard({ board, tab, index, total }: Props) {
         aria-label="Tab editor grid"
         onKeyDown={handleKeyDown}
       >
-        <TabDiagram tab={tab} cursor={cursor} onCellClick={(col, si) => moveCursor(col, si)} />
+        <TabDiagram
+          tab={tab}
+          cursor={cursor}
+          onCellClick={(col, si) => moveCursor(col, si)}
+          annotationEdit={annotEdit}
+          onAnnotationClick={(col) => {
+            moveCursor(col, cursor.si);
+            setAnnotEdit(col);
+          }}
+          onAnnotationChange={setAnnotation}
+          onAnnotationDone={() => setAnnotEdit(null)}
+        />
       </div>
 
       <div className="tab-editor__fretboard no-print">

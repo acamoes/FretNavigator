@@ -78,6 +78,13 @@ export interface TabColumn {
   frets: (number | null)[];
   /** Draw a barline immediately before this column. */
   bar?: boolean;
+  /** Free-text label drawn above this column (chord/note name, e.g. "A#m7"). */
+  annotation?: string;
+  /**
+   * String indices tied to the NEXT column by a slur (hammer-on / pull-off).
+   * Which of the two it is follows from the frets, so only the tie is stored.
+   */
+  slurs?: number[];
 }
 
 /** A guitar tablature section (a solo written as fret numbers over time). */

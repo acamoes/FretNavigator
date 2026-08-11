@@ -234,3 +234,38 @@ gets `break-before: page` (`.report__block--break`), so tabs get their own
 page(s) — order is preserved and the fretboard layout is untouched, at the cost
 of a tab never sharing a page with a fretboard (accepted; "hybrid" option B).
 Deferred to `todo.md`: techniques (h/p//b) and rhythm/duration.
+
+## 14. Tab column annotations + hammer-on/pull-off slurs
+**2026-08-12 · Accepted**
+
+**Context.** Two gaps when writing a solo: you couldn't name the chord over a
+moment in the tab ("A", "C#m7"), and there was no way to mark a hammer-on or
+pull-off — the first of the techniques deferred by #13.
+
+**Decision.** Two optional fields on `TabColumn`, so **no schema bump** (absence =
+no data, exactly like `bar` and `Board.strumming` in #12): `annotation?: string`
+and `slurs?: number[]` (string indices tied to the **next** column). Both are
+rendered by the shared `TabDiagram`, so the report inherits them for free.
+
+- *Slur direction is derived, not stored.* Next fret higher = hammer-on, lower =
+  pull-off. There is nothing to keep in sync, editing is one toggle, and both
+  `h` and `p` are accepted as the shortcut. Only the arc is drawn (no `h`/`p`
+  letters), which is what the reference notation looks like.
+- *Annotations overflow right instead of widening the cell.* `SIZES` in
+  `TabDiagram` is the single source of truth for the wrapping maths, and its cell
+  width is constrained by the two-digit-fret rule. A wide chord name would break
+  both, so the label is absolutely positioned at its column and allowed to run
+  over the following ones — how printed tab does it anyway.
+- *The arc is CSS, not SVG* (`border-top` + elliptical `border-radius`), staying
+  with #13's HTML/CSS tab. `width: 100%` of a `.tab-cell` **is** the centre-to-
+  centre distance, so it aligns without new geometry. Its height/offset are two
+  more `SIZES` entries (`slurH`, `slurGap`) rather than hard-coded CSS.
+
+**Consequences.** Anything the normalizers don't know about is dropped on every
+rehydration, so both fields had to be added to `normalizeTabColumns` **and**
+`cloneTabSection`. A slur is drawn only when its partner column is in the same
+system — across a line break the arc is dropped rather than pointed at nothing.
+Deleting a column clears the previous column's slurs, and changing to a tuning
+with fewer strings filters orphaned indices. The annotation row shows always in
+the editor (it's the click target) but only when non-empty in print, so
+unannotated tabs keep their current PDF density.

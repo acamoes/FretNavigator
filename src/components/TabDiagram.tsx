@@ -1,5 +1,5 @@
 import { CSSProperties, useLayoutEffect, useRef, useState } from 'react';
-import { TabSection } from '../types';
+import { TabColumn, TabSection } from '../types';
 import { getTuning } from '../music-theory';
 
 interface Props {
@@ -8,6 +8,12 @@ interface Props {
   cursor?: { col: number; si: number } | null;
   /** When provided, cells are clickable (editor). */
   onCellClick?: (col: number, si: number) => void;
+  /** Column whose annotation is being edited inline (editor only). */
+  annotationEdit?: number | null;
+  /** When provided, the annotation row is editable (editor). */
+  onAnnotationClick?: (col: number) => void;
+  onAnnotationChange?: (col: number, value: string) => void;
+  onAnnotationDone?: () => void;
   /**
    * Fixed columns per wrapped "system". Omit to size dynamically from the
    * container width (editor); the print variant derives its own fixed value so
@@ -28,11 +34,28 @@ interface Props {
  */
 const SIZES = {
   // 22 >= 1.15*14 + 2*3 = 22.1 (borderline by design: roomy, clickable targets)
-  editor: { cell: 22, label: 20, row: 24, font: 14, numPad: 3 },
+  editor: { cell: 22, label: 20, row: 24, font: 14, numPad: 3, slurH: 5, slurGap: 6 },
   // Compact, professional PDF density: ~4.0mm columns, ~2.9mm between strings,
   // ~7pt numbers. 15 >= 1.15*9.5 + 2*1.5 = 13.9 ✓
-  print: { cell: 15, label: 15, row: 11, font: 9.5, numPad: 1.5 },
+  print: { cell: 15, label: 15, row: 11, font: 9.5, numPad: 1.5, slurH: 3, slurGap: 3 },
 } as const;
+
+/**
+ * A slur is drawn from this cell's centre to the next column's, so it needs a
+ * partner column IN THE SAME system — across a line break, printed tab simply
+ * drops the arc rather than pointing it at nothing.
+ */
+function hasSlur(c: TabColumn, next: TabColumn | undefined, si: number): boolean {
+  return !!next && !!c.slurs?.includes(si);
+}
+
+/** Hammer-on or pull-off follows from the two frets; it isn't stored. */
+function slurName(c: TabColumn, next: TabColumn | undefined, si: number): string {
+  const from = c.frets[si];
+  const to = next?.frets[si];
+  if (from == null || to == null) return 'slur';
+  return to > from ? 'hammer-on' : to < from ? 'pull-off' : 'slur';
+}
 
 /** A4 content width used for print chunking: 210mm − 2×14mm ≈ 182mm @96dpi. */
 const A4_CONTENT_PX = 688;
@@ -44,11 +67,26 @@ const FALLBACK_COLS = 16;
  * Renders a guitar tab (fret numbers over time) as stacked systems that wrap to
  * the available width. Interactive (clickable cells) when `onCellClick` is given.
  */
-export function TabDiagram({ tab, cursor, onCellClick, colsPerSystem, variant = 'editor' }: Props) {
+export function TabDiagram({
+  tab,
+  cursor,
+  onCellClick,
+  annotationEdit,
+  onAnnotationClick,
+  onAnnotationChange,
+  onAnnotationDone,
+  colsPerSystem,
+  variant = 'editor',
+}: Props) {
   const tuning = getTuning(tab.tuningId) ?? getTuning('standard')!;
   const numStrings = tuning.strings.length;
   const interactive = !!onCellClick;
   const size = SIZES[variant];
+
+  // Editor: always, so the empty row is the affordance for adding a label.
+  // Print: only when there is something to show, so unannotated tabs keep
+  // exactly the density they have today.
+  const showAnnotations = variant === 'editor' || tab.columns.some((c) => c.annotation?.trim());
 
   // Print wraps to the page width (fixed); the editor measures its container.
   const fixedCols =
@@ -87,6 +125,8 @@ export function TabDiagram({ tab, cursor, onCellClick, colsPerSystem, variant = 
     '--tab-row-h': `${size.row}px`,
     '--tab-font': `${size.font}px`,
     '--tab-num-pad': `${size.numPad}px`,
+    '--tab-slur-h': `${size.slurH}px`,
+    '--tab-slur-gap': `${size.slurGap}px`,
   } as CSSProperties;
 
   return (
@@ -100,6 +140,50 @@ export function TabDiagram({ tab, cursor, onCellClick, colsPerSystem, variant = 
         const fillerCount = Math.max(0, cols - sys.cols.length);
         return (
           <div className="tab-system" key={sys.start}>
+            {showAnnotations && (
+              <div className="tab-row tab-row--annot">
+                <span className="tab-label" aria-hidden="true" />
+                <div className="tab-cells">
+                  {sys.cols.map((c, j) => {
+                    const col = sys.start + j;
+                    return (
+                      <span
+                        key={col}
+                        className="tab-cell tab-annot-cell"
+                        onClick={onAnnotationClick ? () => onAnnotationClick(col) : undefined}
+                        role={onAnnotationClick ? 'button' : undefined}
+                      >
+                        {annotationEdit === col ? (
+                          <input
+                            className="tab-annot-input"
+                            autoFocus
+                            value={c.annotation ?? ''}
+                            aria-label={`Label above column ${col + 1}`}
+                            onChange={(e) => onAnnotationChange?.(col, e.target.value)}
+                            onBlur={onAnnotationDone}
+                            onClick={(e) => e.stopPropagation()}
+                            onKeyDown={(e) => {
+                              // The grid swallows digits, space and arrows.
+                              e.stopPropagation();
+                              if (e.key === 'Enter' || e.key === 'Escape') onAnnotationDone?.();
+                            }}
+                          />
+                        ) : c.annotation ? (
+                          <span className="tab-annot">{c.annotation}</span>
+                        ) : null}
+                      </span>
+                    );
+                  })}
+                  {Array.from({ length: fillerCount }, (_, k) => (
+                    <span
+                      key={`annot-filler-${k}`}
+                      className="tab-cell tab-annot-cell tab-cell--filler"
+                      aria-hidden="true"
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
             {Array.from({ length: numStrings }, (_, row) => {
               const si = numStrings - 1 - row; // top row = highest string
               return (
@@ -109,6 +193,7 @@ export function TabDiagram({ tab, cursor, onCellClick, colsPerSystem, variant = 
                     {sys.cols.map((c, j) => {
                       const col = sys.start + j;
                       const val = c.frets[si];
+                      const next = sys.cols[j + 1];
                       const isCursor = !!cursor && cursor.col === col && cursor.si === si;
                       const cls =
                         'tab-cell' +
@@ -123,6 +208,9 @@ export function TabDiagram({ tab, cursor, onCellClick, colsPerSystem, variant = 
                           role={interactive ? 'button' : undefined}
                         >
                           {val != null ? <span className="tab-num">{val}</span> : ''}
+                          {hasSlur(c, next, si) && (
+                            <span className="tab-slur" aria-hidden="true" title={slurName(c, next, si)} />
+                          )}
                         </span>
                       );
                     })}

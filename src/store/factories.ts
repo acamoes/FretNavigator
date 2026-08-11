@@ -55,14 +55,23 @@ export function createTabSection(tuningId = 'standard'): TabSection {
   return { kind: 'tab', id: uid('tab'), label: 'Solo', tuningId, columns };
 }
 
+/** Slur string indices, de-duped and sorted; undefined when there are none. */
+function normalizeSlurs(raw: unknown): number[] | undefined {
+  if (!Array.isArray(raw)) return undefined;
+  const clean = [...new Set(raw.filter((n): n is number => Number.isInteger(n) && n >= 0))].sort((a, b) => a - b);
+  return clean.length ? clean : undefined;
+}
+
 /** Coerce persisted/imported data into clean tab columns. */
 function normalizeTabColumns(raw: unknown): TabColumn[] {
   if (!Array.isArray(raw)) return [];
   return raw.map((c) => {
-    const col = (c ?? {}) as { frets?: unknown; bar?: unknown };
+    const col = (c ?? {}) as { frets?: unknown; bar?: unknown; annotation?: unknown; slurs?: unknown };
     return {
       frets: Array.isArray(col.frets) ? (col.frets as (number | null)[]).map((f) => (typeof f === 'number' ? f : null)) : [],
       bar: col.bar ? true : undefined,
+      annotation: typeof col.annotation === 'string' && col.annotation.trim() ? col.annotation : undefined,
+      slurs: normalizeSlurs(col.slurs),
     };
   });
 }
@@ -125,7 +134,12 @@ export function cloneTabSection(tab: TabSection, label?: string): TabSection {
     ...tab,
     id: uid('tab'),
     label: label ?? `${tab.label} (copy)`,
-    columns: tab.columns.map((c) => ({ frets: [...c.frets], bar: c.bar })),
+    columns: tab.columns.map((c) => ({
+      frets: [...c.frets],
+      bar: c.bar,
+      annotation: c.annotation,
+      slurs: c.slurs ? [...c.slurs] : undefined,
+    })),
   };
 }
 

@@ -1,5 +1,13 @@
 import { describe, it, expect } from 'vitest';
-import { cloneBoard, createBoard, createStrummingPattern, createTabSection, normalizeSections } from './factories';
+import { TabSection } from '../types';
+import {
+  cloneBoard,
+  cloneTabSection,
+  createBoard,
+  createStrummingPattern,
+  createTabSection,
+  normalizeSections,
+} from './factories';
 
 describe('strumming factories', () => {
   it('createStrummingPattern makes one bar of 8 empty slots', () => {
@@ -50,5 +58,58 @@ describe('sections', () => {
     expect(tab.kind).toBe('tab');
     expect(tab.columns.length).toBeGreaterThan(0);
     expect(tab.columns.every((c) => c.frets.length === 6 && c.frets.every((f) => f === null))).toBe(true);
+  });
+
+  // normalizeTabColumns rebuilds every column field by field, so anything it
+  // doesn't know about is silently dropped on rehydration and on import.
+  it('normalizeSections keeps tab annotations and slurs', () => {
+    const raw = {
+      sections: [
+        {
+          kind: 'tab',
+          id: 't1',
+          label: 'Solo',
+          tuningId: 'standard',
+          columns: [{ frets: [null, null, null, null, null, 9], annotation: 'A#m7', slurs: [5] }],
+        },
+      ],
+    };
+    const tab = normalizeSections(raw)[0] as TabSection;
+
+    expect(tab.columns[0].annotation).toBe('A#m7');
+    expect(tab.columns[0].slurs).toEqual([5]);
+  });
+
+  it('normalizeSections cleans junk annotations and slurs', () => {
+    const raw = {
+      sections: [
+        {
+          kind: 'tab',
+          id: 't1',
+          label: 'Solo',
+          tuningId: 'standard',
+          columns: [
+            { frets: [], annotation: '   ', slurs: ['x', -1, 2, 2, 1.5] },
+            { frets: [], annotation: 42, slurs: [] },
+          ],
+        },
+      ],
+    };
+    const tab = normalizeSections(raw)[0] as TabSection;
+
+    expect(tab.columns[0].annotation).toBeUndefined(); // whitespace-only
+    expect(tab.columns[0].slurs).toEqual([2]); // deduped, non-integers dropped
+    expect(tab.columns[1].annotation).toBeUndefined(); // not a string
+    expect(tab.columns[1].slurs).toBeUndefined(); // empty -> absent
+  });
+
+  it('cloneTabSection copies annotations and does not share the slurs array', () => {
+    const tab = createTabSection('standard');
+    tab.columns[0] = { ...tab.columns[0], annotation: 'C', slurs: [0] };
+    const clone = cloneTabSection(tab);
+
+    expect(clone.columns[0].annotation).toBe('C');
+    clone.columns[0].slurs!.push(3);
+    expect(tab.columns[0].slurs).toEqual([0]); // original untouched
   });
 });
