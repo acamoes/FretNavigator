@@ -15,6 +15,7 @@ import {
   parseKeyId,
   parseChordId,
   getTuning,
+  keySummary,
 } from './index';
 
 describe('notes', () => {
@@ -100,6 +101,70 @@ describe('chords', () => {
     expect(chordDisplayName(chordId(9, 'min'))).toBe('Am');
     expect(chordDisplayName(chordId(2, '7'))).toBe('D7');
     expect(chordDisplayName(chordId(10, 'maj'), true)).toBe('Bb');
+  });
+});
+
+describe('diatonic harmony', () => {
+  it('C major harmonizes into the textbook triads', () => {
+    const s = keySummary(keyId(0, 'major'))!;
+    expect(s.notes).toEqual(['C', 'D', 'E', 'F', 'G', 'A', 'B']);
+    expect(s.chords.map((c) => c.numeral)).toEqual(['I', 'ii', 'iii', 'IV', 'V', 'vi', 'vii°']);
+    expect(s.chords.map((c) => c.triadName)).toEqual(['C', 'Dm', 'Em', 'F', 'G', 'Am', 'Bdim']);
+  });
+
+  it('C major sevenths put the dominant on G', () => {
+    const s = keySummary(keyId(0, 'major'))!;
+    expect(s.chords.map((c) => c.seventhName)).toEqual([
+      'Cmaj7',
+      'Dm7',
+      'Em7',
+      'Fmaj7',
+      'G7',
+      'Am7',
+      'Bm7b5',
+    ]);
+    expect(s.chords[4].seventhNotes).toBe('G B D F');
+    expect(s.chords[6].functionName).toBe('Leading tone'); // B is a semitone under C
+  });
+
+  it('A minor numerals are relative to the scale, without flats', () => {
+    const s = keySummary(keyId(9, 'minor'))!;
+    expect(s.notes).toEqual(['A', 'B', 'C', 'D', 'E', 'F', 'G']);
+    expect(s.chords.map((c) => c.numeral)).toEqual(['i', 'ii°', 'III', 'iv', 'v', 'VI', 'VII']);
+    expect(s.chords[6].functionName).toBe('Subtonic'); // G is a whole tone under A
+  });
+
+  it('spells flat keys with flats, never as sharps', () => {
+    const s = keySummary(keyId(3, 'major'))!; // Eb major
+    expect(s.notes).toEqual(['Eb', 'F', 'G', 'Ab', 'Bb', 'C', 'D']);
+    expect(s.tonicName).toBe('Eb');
+    expect(s.notes.join('')).not.toContain('#');
+  });
+
+  it('breaks the F#/Gb tie towards sharps', () => {
+    const s = keySummary(keyId(6, 'major'))!;
+    expect(s.notes).toEqual(['F#', 'G#', 'A#', 'B', 'C#', 'D#', 'E#']);
+  });
+
+  it('harmonic minor raises the dominant to a major chord', () => {
+    const s = keySummary(keyId(9, 'harmonic-minor'))!;
+    expect(s.notes).toEqual(['A', 'B', 'C', 'D', 'E', 'F', 'G#']);
+    expect(s.chords[4].triadName).toBe('E'); // major V, not Em
+    expect(s.chords[4].seventhName).toBe('E7');
+    expect(s.chords[6].triadName).toBe('G#dim');
+    expect(s.chords[0].seventhName).toBe('AmMaj7'); // needs the mMaj7 type
+    expect(s.chords[2].seventhName).toBe('Cmaj7#5');
+  });
+
+  it('pentatonic scales report notes but no diatonic chords', () => {
+    const s = keySummary(keyId(0, 'major-pentatonic'))!;
+    expect(s.notes).toHaveLength(5);
+    expect(s.chords).toEqual([]);
+  });
+
+  it('returns null for an unparseable key', () => {
+    expect(keySummary('99:bogus')).toBeNull();
+    expect(keySummary('')).toBeNull();
   });
 });
 

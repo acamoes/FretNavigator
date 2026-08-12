@@ -269,3 +269,47 @@ Deleting a column clears the previous column's slurs, and changing to a tuning
 with fewer strings filters orphaned indices. The annotation row shows always in
 the editor (it's the click target) but only when non-empty in print, so
 unannotated tabs keep their current PDF density.
+
+## 15. Board-level key + diatonic degree table
+**2026-08-12 · Accepted**
+
+**Context.** The app knew about keys only per fretboard, where a key is just a
+coloring input. Nothing said what key the *song* is in, and nothing explained the
+harmony: which notes belong to the key and which chord each degree produces.
+
+**Decision.** `Board.keyId?: string` (same `"<rootPc>:<scaleId>"` encoding as
+`Fretboard.keyId`, so `parseKeyId` serves both and "Apply to all fretboards" is a
+plain copy). **No schema bump** — optional scalar, absence = no key, like `bpm`
+(#12) and the tab fields (#14). A new pure module `music-theory/harmony.ts`
+exposes `keySummary(keyId)`; `KeyTable` renders it for both the editor and the
+report, the same shared-render split used by strumming (#12) and tab (#13).
+
+Three judgment calls worth recording:
+
+- *Roman numerals are relative to the scale, not to a parallel major.* A minor
+  reads `i ii° III iv v VI VII`, not `i ii° bIII iv v bVI bVII`. The numeral comes
+  from the degree index, so the rule holds identically for every mode
+  (Mixolydian → `I ii iii° IV v vi VII`). The pop convention of flagging
+  accidentals would need a second reference key to compare against, which the
+  model doesn't have and which breaks down for the modes.
+- *Notes are spelled by letter, not by the `preferFlats` boolean.* `noteName` has
+  only a sharps and a flats table, which would print Eb major as
+  "D# F G G# A# C D". Instead each degree of a 7-note scale takes its own letter
+  A–G and the accidental falls out of the pitch difference; the tonic's letter is
+  chosen by **minimizing the total accidentals** of the spelled scale (ties go to
+  sharps). That reproduces the conventional key signatures — Eb major, Bb major,
+  F# major — without a circle-of-fifths table, and it is why `ScaleType.usesFlats`
+  stays unused.
+- *Two chord types were added to close the table.* Harmonic and melodic minor
+  produce `mMaj7` on i and `maj7#5` on III, which had no match in `CHORD_TYPES`;
+  without them those cells would be blank. They are additive and now also appear
+  in the per-fretboard chord picker.
+
+**Consequences.** Quality detection matches an interval signature against a
+**short candidate list** per row (4 triad types, 7 seventh types) — searching all
+of `CHORD_TYPES` lets `sus2`/`add9` win over the plain triad they share notes
+with. Scales that aren't 7 notes (pentatonics, blues) don't stack into thirds, so
+`chords` comes back empty and the UI shows the notes plus one explanatory line
+instead of an empty table. Chord symbols reuse the app's existing `ChordType.symbol`
+(so a diminished triad reads "Bdim", matching the chord chips elsewhere) while the
+numeral column carries the `°`/`+` quality marks.

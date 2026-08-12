@@ -35,7 +35,9 @@ layer (`src/store/`), which persists locally — there is no network tier.
 | File | Role |
 | --- | --- |
 | `Dashboard.tsx` | List of boards (create / open / duplicate / delete / import-export). |
-| `BoardView.tsx` | Edit one board: name/description, `StrummingEditor`, the ordered list of **sections** (`FretboardCard` / `TabCard`), "+ Add fretboard" / "+ Add tab". |
+| `BoardView.tsx` | Edit one board: name/description, `StrummingEditor`, `KeyPanel`, the ordered list of **sections** (`FretboardCard` / `TabCard`), "+ Add fretboard" / "+ Add tab". |
+| `KeyPanel.tsx` | Board-level song-key picker + "Apply to all fretboards"; hosts `KeyTable`. |
+| `KeyTable.tsx` | Pure render of a key's notes + diatonic chords/degrees (editor + report). |
 | `FretboardCard.tsx` | One interactive fretboard section: controls + diagram + brush; owns transient local state (chord focus/refine). |
 | `FretboardControls.tsx` | Tuning, frets, capo, notes/intervals, key, chord progression. |
 | `FretboardDiagram.tsx` | **SVG renderer** of a fretboard model (interactive *or* static); shared by the card **and** the report. |
@@ -55,8 +57,9 @@ layer (`src/store/`), which persists locally — there is no network tier.
 | `src/music-theory/intervals.ts` | Interval labels + color convention. |
 | `src/music-theory/scales.ts` | Scale/key formulas, `parseKeyId`. |
 | `src/music-theory/chords.ts` | Chord formulas, `chordToneRoles`, `parseChordId`, `chordDisplayName`. |
+| `src/music-theory/harmony.ts` | `keySummary()`: a key's letter-spelled notes + its diatonic triads/sevenths with roman numerals. |
 | `src/music-theory/fretboard.ts` | `TUNINGS`, `getTuning`, `pitchAt` (string+fret → pitch), inlay dots. |
-| `src/music-theory/index.ts` | Barrel re-exporting the five modules above. |
+| `src/music-theory/index.ts` | Barrel re-exporting the six modules above. |
 
 ### State + Persistence ("backend" = local)
 | File | Role |
@@ -69,10 +72,10 @@ layer (`src/store/`), which persists locally — there is no network tier.
 ### Types
 | File | Role |
 | --- | --- |
-| `src/types.ts` | Domain model: `Board`, `Section` (= `Fretboard \| TabSection`), `Fretboard`, `TabSection`/`TabColumn`, `ChordEntry`, `SelectedNote`, `StrummingPattern`, `NoteStyle`, `SCHEMA_VERSION`. Imported almost everywhere. |
+| `src/types.ts` | Domain model: `Board` (incl. optional `bpm`/`keyId`/`strumming`), `Section` (= `Fretboard \| TabSection`), `Fretboard`, `TabSection`/`TabColumn`, `ChordEntry`, `SelectedNote`, `StrummingPattern`, `NoteStyle`, `SCHEMA_VERSION`. Imported almost everywhere. |
 
 ## Tests (Vitest, co-located `*.test.ts`, run with `npm test`)
-- `src/music-theory/music-theory.test.ts` — music theory (notes, intervals, scales, chords).
+- `src/music-theory/music-theory.test.ts` — music theory (notes, intervals, scales, chords, diatonic harmony).
 - `src/components/fretboardLayout.test.ts` — `buildFretboardModel` (highlights, `keep` voicing, refine).
 - `src/store/factories.test.ts` — factories, `normalizeSections`, clones, strumming/tab.
 

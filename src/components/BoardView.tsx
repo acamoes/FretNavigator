@@ -3,6 +3,7 @@ import { downloadBoard } from '../store/ioBoard';
 import { FretboardCard } from './FretboardCard';
 import { TabCard } from './TabCard';
 import { StrummingEditor } from './StrummingEditor';
+import { KeyPanel } from './KeyPanel';
 
 interface Props {
   boardId: string;
@@ -75,6 +76,8 @@ export function BoardView({ boardId, onBack, onReport }: Props) {
         </label>
         <StrummingEditor board={board} />
       </header>
+
+      <KeyPanel board={board} />
 
       <div className="board-view__fretboards">
         {board.sections.map((section, i) =>

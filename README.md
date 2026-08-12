@@ -17,6 +17,7 @@ Built with **React + TypeScript + Vite**, Zustand for state, and a pure, testabl
 - **Configurable fretboards:** tuning (standard + drop D, DADGAD, open G/D, half-step down), fret count (5–24), capo.
 - **Notes / Intervals toggle.** In intervals mode the chosen root shows **R** and the major-scale degrees show **2–7**; non-scale notes are left blank. The root comes from the Root selector _or_ simply the first note you pin on the fretboard.
 - **Key selector.** Highlights all notes of a key (major, the modes, harmonic/melodic minor, pentatonics, blues) in a neutral base color.
+- **Song key + degree table.** Set the key at the top of a board to get its correctly spelled notes (Eb major reads _Eb F G Ab Bb C D_, never _D#…_) and the chord on every degree — triad, seventh, roman numeral and function (_V · G · G7 · Dominant_). One click applies the key to every fretboard.
 - **Chord progressions.** Add several chords to one fretboard, each in its own color. All show at once; notes shared by multiple chords are **split into colored wedges** (common tones), and each chord's root is emphasized. Click a chip to **isolate** one chord.
 - **Chord voicings.** Focus a chord and _"Select notes to keep"_ → click the exact positions of a shape, then **Remove Unselected Notes** to narrow that chord to your voicing.
 - **Manual note pinning** with a color brush: preset fills + independent **outline** presets + free color pickers + dashed outline.

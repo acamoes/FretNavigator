@@ -487,6 +487,140 @@ textarea:focus {
   color: var(--text-secondary);
 }
 
+/* ---------- Key panel + diatonic table ---------- */
+.key-panel {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-card);
+  padding: var(--lg);
+  box-shadow: var(--shadow-1);
+  margin-bottom: var(--lg);
+}
+.key-panel__bar {
+  display: flex;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: var(--md);
+}
+.key-panel__bar .dual {
+  min-width: 280px;
+}
+.key-panel__empty {
+  margin: var(--md) 0 0;
+  font-size: 15px;
+  color: var(--text-muted);
+}
+
+.key-table {
+  margin-top: var(--lg);
+}
+.key-table__head {
+  margin-bottom: var(--md);
+}
+.key-table__title {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text);
+}
+.key-table__scale {
+  font-weight: 400;
+  color: var(--text-muted);
+}
+.key-table__notes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--xs);
+  margin: var(--sm) 0 0;
+}
+.key-table__note {
+  min-width: 38px;
+  padding: 3px 8px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-chip);
+  background: var(--surface-2);
+  text-align: center;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+/* The tonic anchors the key, so it reads first. */
+.key-table__note:first-child {
+  background: var(--brown);
+  border-color: var(--brown);
+  color: var(--white);
+}
+/* Never let the table push the page sideways on a narrow screen. */
+.key-table__scroll {
+  overflow-x: auto;
+}
+.key-table table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+/* Horizontal rules only — editorial, not a spreadsheet. */
+.key-table th {
+  padding: 0 var(--md) var(--sm) 0;
+  border-bottom: 1px solid var(--border-strong);
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+.key-table td {
+  padding: var(--sm) var(--md) var(--sm) 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 16px;
+  white-space: nowrap;
+}
+.key-table tbody tr:last-child td {
+  border-bottom: none;
+}
+.key-table__numeral {
+  font-weight: 700;
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+.key-table__chord {
+  font-weight: 600;
+  color: var(--text);
+}
+.key-table__fn {
+  color: var(--text-muted);
+  font-size: 15px;
+  width: 99%; /* soak up the slack so the chord columns stay tight */
+}
+.key-table__hint {
+  margin: 0;
+  font-size: 15px;
+  color: var(--text-muted);
+}
+
+/* Compact density for the report/PDF, and never split across pages. */
+.key-table--print {
+  margin: 0 0 var(--lg);
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+.key-table--print .key-table__title {
+  font-size: 16px;
+}
+.key-table--print .key-table__note {
+  min-width: 30px;
+  padding: 1px 6px;
+  font-size: 13px;
+}
+.key-table--print td {
+  padding: 3px var(--md) 3px 0;
+  font-size: 13px;
+}
+.key-table--print .key-table__fn {
+  font-size: 12px;
+}
+
 /* ---------- Fretboard card ---------- */
 .fb-card {
   background: var(--surface);

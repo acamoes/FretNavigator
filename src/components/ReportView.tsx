@@ -2,6 +2,7 @@ import { useBoard } from '../store/useStore';
 import { FretboardDiagram } from './FretboardDiagram';
 import { StrummingDiagram } from './StrummingDiagram';
 import { TabDiagram } from './TabDiagram';
+import { KeyTable } from './KeyTable';
 import { Fretboard, Section, StrummingPattern, TabSection } from '../types';
 import { chordDisplayName, getTuning, noteName, parseKeyId } from '../music-theory';
 import { chordColor } from '../store/colorPresets';
@@ -62,20 +63,25 @@ export function ReportView({ boardId, onBack }: Props) {
 
   const blocks = toBlocks(board.sections);
 
+  // The key table sits below the header rather than inside it: .report__header is
+  // a flex row ending in the logo, which a full-width table would fight.
   const header = (
-    <header className="report__header">
-      <div className="report__heading">
-        <h1 className="report__title">{board.name}</h1>
-        {board.description && <p className="report__desc">{board.description}</p>}
-        {board.bpm ? <p className="report__tempo">♩ = {board.bpm} BPM</p> : null}
-      </div>
-      {hasStrum(board.strumming) && (
-        <div className="report__header-strum">
-          <StrummingDiagram pattern={board.strumming} />
+    <>
+      <header className="report__header">
+        <div className="report__heading">
+          <h1 className="report__title">{board.name}</h1>
+          {board.description && <p className="report__desc">{board.description}</p>}
+          {board.bpm ? <p className="report__tempo">♩ = {board.bpm} BPM</p> : null}
         </div>
-      )}
-      <img className="report__logo" src={`${import.meta.env.BASE_URL}logo.png`} alt="FretNavigator" />
-    </header>
+        {hasStrum(board.strumming) && (
+          <div className="report__header-strum">
+            <StrummingDiagram pattern={board.strumming} />
+          </div>
+        )}
+        <img className="report__logo" src={`${import.meta.env.BASE_URL}logo.png`} alt="FretNavigator" />
+      </header>
+      {board.keyId && <KeyTable keyId={board.keyId} variant="print" />}
+    </>
   );
 
   return (

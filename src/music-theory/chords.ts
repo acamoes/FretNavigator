@@ -33,6 +33,10 @@ export const CHORD_TYPES: ChordType[] = [
   { id: '9', symbol: '9', name: 'Dominant 9th', intervals: [0, 4, 7, 10, 2] },
   { id: 'maj9', symbol: 'maj9', name: 'Major 9th', intervals: [0, 4, 7, 11, 2] },
   { id: 'm9', symbol: 'm9', name: 'Minor 9th', intervals: [0, 3, 7, 10, 2] },
+  // The two sevenths harmonic/melodic minor need (see harmony.ts): without them
+  // the i and III degrees of those keys have no matching type.
+  { id: 'mMaj7', symbol: 'mMaj7', name: 'Minor Major 7th', intervals: [0, 3, 7, 11] },
+  { id: 'maj7#5', symbol: 'maj7#5', name: 'Major 7th ♯5', intervals: [0, 4, 8, 11] },
 ];
 
 export function getChordType(id: string): ChordType | undefined {
