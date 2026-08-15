@@ -554,8 +554,55 @@ textarea:focus {
 .key-table__scroll {
   overflow-x: auto;
 }
-.key-table table {
+/* Table and chord diagrams side by side; the diagrams claim the width the
+   table doesn't need. Wraps to stacked on a narrow screen. */
+.key-table__body {
+  display: flex;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: var(--lg);
+}
+.key-table__shapes {
+  flex: 1 1 300px;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--sm);
+  align-content: start;
+}
+.chord-dia {
+  display: block;
   width: 100%;
+  height: auto;
+}
+.chord-dia__grid {
+  stroke: var(--border-strong);
+  stroke-width: 0.7;
+  opacity: 0.55;
+}
+.chord-dia__nut {
+  stroke: var(--brown);
+  stroke-width: 2.6;
+}
+.chord-dia__dot {
+  fill: var(--brown);
+}
+.chord-dia__name {
+  fill: var(--text);
+  font-size: 11px;
+  font-weight: 700;
+}
+.chord-dia__mark {
+  fill: var(--text-muted);
+  font-size: 8px;
+}
+.chord-dia__fr {
+  fill: var(--text-muted);
+  font-size: 7px;
+}
+
+/* Table sizes to its content: the slack belongs to the diagrams beside it. */
+.key-table table {
+  width: auto;
   border-collapse: collapse;
   text-align: left;
 }
@@ -591,7 +638,7 @@ textarea:focus {
 .key-table__fn {
   color: var(--text-muted);
   font-size: 15px;
-  width: 99%; /* soak up the slack so the chord columns stay tight */
+  padding-right: 0;
 }
 .key-table__hint {
   margin: 0;
@@ -601,7 +648,7 @@ textarea:focus {
 
 /* Compact density for the report/PDF, and never split across pages. */
 .key-table--print {
-  margin: 0 0 var(--lg);
+  margin: 0 0 var(--md);
   break-inside: avoid;
   page-break-inside: avoid;
 }
@@ -616,6 +663,15 @@ textarea:focus {
 .key-table--print td {
   padding: 3px var(--md) 3px 0;
   font-size: 13px;
+}
+/* Seven boxes as 4+3, sized to the band left over beside the table. */
+.key-table--print .key-table__body {
+  gap: var(--md);
+}
+.key-table--print .key-table__shapes {
+  flex: 1 1 auto;
+  gap: 6px 10px;
+  max-width: 96mm;
 }
 .key-table--print .key-table__fn {
   font-size: 12px;
@@ -1580,9 +1636,9 @@ textarea:focus {
 
 /* ---------- Print ---------- */
 @media print {
-  /* size: A4 gives .report__page a fixed reference to compute a per-page
-     height from (needed so fretboards can flex to fill it exactly). margin: 0
-     suppresses the browser's own header/footer (page title, date, URL/host:port). */
+  /* margin: 0 suppresses the browser's own header/footer (page title, date,
+     URL/host:port) by leaving it nowhere to draw; the page's own margins come
+     from .report__sheet padding plus each section's padding. */
   @page {
     size: A4;
     margin: 0;
@@ -1617,66 +1673,33 @@ textarea:focus {
     padding: 0;
     max-width: none;
   }
+  /* Sections flow continuously and the browser paginates; only the first page's
+     top and the last page's bottom get this padding, which is why each section
+     carries its own vertical padding below. */
   .report__sheet {
     border: none;
-    /* Vertical padding lives on .report__page instead (see below): a block
-       that breaks across pages only gets its own padding-top before the
-       first fragment and padding-bottom after the last one, so pages in the
-       middle would otherwise end up with no vertical margin at all. */
-    padding: 0 14mm;
+    padding: 12mm 14mm;
     box-shadow: none;
   }
-  /* One .report__page = one physical A4 page, holding at most
-     MAX_FRETBOARDS_PER_PAGE fretboards (see ReportView.tsx). Fixed height +
-     flex column lets .report__page-fretboards claim the space left after the
-     header and spread its fretboards evenly down it. The fretboard is a
-     wide/short shape (~3.85:1), so its size is bound by page WIDTH, not
-     height — each renders at full page width; the leftover vertical space
-     becomes even spacing rather than making them taller. */
-  .report__page {
-    display: flex;
-    flex-direction: column;
-    height: 297mm;
-    box-sizing: border-box;
-    padding: 12mm 0;
-  }
-  /* Hybrid pagination: each block (a fretboard page or a tab) after the first
-     starts on a fresh physical page. Fretboard pages keep their fixed height;
-     tabs flow at natural height. */
-  .report__block--break {
-    break-before: page;
-    page-break-before: always;
-  }
+  /* Spacing between sections AND the breathing room a section gets when it
+     starts a fresh page. It has to be padding, not margin: margins are dropped
+     at a page boundary, padding is always drawn. */
+  .report__fretboard,
   .report__tab {
-    padding: 12mm 0;
+    break-inside: avoid;
+    page-break-inside: avoid;
+    padding: 5mm 0;
   }
   .report__tab .tab-system {
     break-inside: avoid;
     page-break-inside: avoid;
   }
   .report__header {
-    flex: 0 0 auto;
     margin-bottom: 6pt;
     padding-bottom: 5pt;
   }
   .report__title {
     font-size: 24px;
-  }
-  .report__page-fretboards {
-    flex: 1 1 auto;
-    min-height: 0;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-evenly;
-  }
-  /* Natural height (full-width diagram + head + chips). NOT flex: 1 — dividing
-     the page equally gave fretboards with chord rows a shorter diagram cell,
-     which then rendered narrower than the rest. */
-  .report__fretboard {
-    flex: 0 0 auto;
-    break-inside: avoid;
-    page-break-inside: avoid;
-    padding: 5pt 0;
   }
   .report__fb-head {
     margin-bottom: 2pt;

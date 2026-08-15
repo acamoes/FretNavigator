@@ -313,3 +313,86 @@ with. Scales that aren't 7 notes (pentatonics, blues) don't stack into thirds, s
 instead of an empty table. Chord symbols reuse the app's existing `ChordType.symbol`
 (so a diminished triad reads "Bdim", matching the chord chips elsewhere) while the
 numeral column carries the `°`/`+` quality marks.
+
+## 16. Tighter report spacing + chord diagrams beside the key table
+**2026-08-12 · Accepted**
+
+**Context.** Two complaints about the printed page: ~2.2cm of dead space between
+every block (key table → Fretboard 1 → Fretboard 2), and a wide empty band beside
+the degree table that should show how to *play* each degree.
+
+**Decision (spacing) — supersedes #11's spacing consequence.**
+`.report__page-fretboards` goes from `justify-content: space-evenly` to
+`flex-start` plus an explicit `gap: 6mm`. The `space-evenly` was coherent under
+#10, where `.report__fretboard` was `flex: 1 1 0` and *consumed* the surplus of
+the fixed 297mm page. #11 changed them to natural height so they wouldn't render
+narrow — and left `space-evenly` behind, so from then on the entire surplus
+became n+1 equal gaps (~22mm with two fretboards, ~65mm with one). #11's own
+consequence ("fewer per page now means more even spacing… accepted by the user")
+is hereby un-accepted. The page keeps `height: 297mm`: that is what makes one
+block one physical page and keeps the 12mm bottom padding on fragmented pages.
+Surplus now collects at the page foot, where it reads as a margin.
+
+**Decision (chord diagrams).** A new pure `music-theory/chordShapes.ts` maps a
+chord id to a `ChordShape` (fret per string, base fret, optional barre), and
+`components/ChordDiagram.tsx` draws it as a songbook chord box. `KeyTable` shows
+one per degree in a grid beside the table, so the editor and the report both get
+them.
+
+- *A curated table, not a voicing search.* Searching would need octave-aware
+  pitches — the model only has pitch classes (`pitchAt` returns 0–11) — plus
+  playability heuristics that produce awkward grips easily. The degree table only
+  ever needs four triad types, so the table is small and predictable. Open shapes
+  are tried first (key of C shows the open C, not a barre at the 8th fret), then
+  movable shapes rooted on the 6th or 5th string, **lowest position winning** —
+  which is what puts Bm at the 2nd fret and F#dim at the 2nd rather than the 9th.
+- *Standard tuning only.* A board's key carries no tuning (each fretboard has its
+  own), and covering DADGAD/open G would require exactly the search above.
+- *A new SVG, not a reused `FretboardDiagram`.* That component takes a whole
+  `Fretboard` document, has module-level fixed geometry with no scale, always
+  starts at fret 0, and runs its axes the other way round (fret→x, string→y).
+
+**Consequences.** The hand-written shape table is guarded by a test that replays
+every shape (4 types × 12 roots) through `chordToneRoles` + `pitchAt` and asserts
+it sounds exactly the chord's pitch classes, plus a second test that every shape
+fits the diagram's four-fret window — so a transcription slip fails the build
+rather than printing a wrong chord. Making room for the diagrams meant dropping
+`.key-table__fn { width: 99% }`: that trick squeezed the chord columns by pushing
+all slack into the Function column, which *was* the empty band. The table now
+sizes to its content and the slack belongs to the diagram grid.
+
+## 17. The report is one continuous flow (supersedes #10's page groups and #13's tab pages)
+**2026-08-16 · Accepted**
+
+**Context.** Two failures in a row from the same root. First a tab section
+printed *on top of* a fretboard. Then, once that was fixed, the opposite: a board
+with two fretboards and one tab produced three pages, each holding a single
+section with two-thirds of the sheet blank.
+
+**Cause.** Both came from pagination being computed in JS and forced with CSS.
+`toBlocks()` chunked sections into "pages", `.report__page` was pinned to
+`height: 297mm` (#10, so fretboards could flex-fill it) and every block after the
+first carried `break-before: page` (#13). #11 removed the flex-filling but kept
+the rigid box, so content could exceed it — and overflow out of a fixed-height
+box is neither clipped nor reflowed; the browser painted it outside the element,
+onto the sheet the next block had claimed. Hence the overlap. Capping the chunks
+stopped the overlap but left the forced break per block, which is what wasted
+whole pages: the JS had no way to know a tab would have fit under a fretboard.
+
+**Decision.** Delete the whole mechanism. Sections render in order in one
+continuous `.report__sheet`, with **no JS chunking and no forced page breaks**.
+Each section carries `break-inside: avoid`, so it is never cut in half, and the
+browser fills each page with whatever fits. `toBlocks`, `.report__page`,
+`.report__page-fretboards` and `.report__block--break` are all gone.
+
+**Consequences.** Pagination is now the browser's job, which is the one thing it
+is actually good at, and the failure mode is a page that ends early rather than
+overlapping ink. Section spacing had to move from `margin`/flex `gap` to
+**`padding` on the section itself**: margins are dropped at a page boundary,
+padding is always drawn, so `padding: 5mm 0` doubles as the gap between sections
+and as the breathing room a section gets when it starts a fresh page. Vertical
+page margins otherwise come only from `.report__sheet` padding, which lands on
+the first page's top and the last page's bottom — `@page { margin: 0 }` has to
+stay (it is what suppresses the browser's header/footer, #6), so an interior page
+break relies on that section padding alone. A tab can now share a page with a
+fretboard, which #13 had accepted as impossible.

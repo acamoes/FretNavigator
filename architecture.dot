@@ -45,6 +45,7 @@ digraph FretNavigator {
     td    [label="TabDiagram.tsx\nHTML render"];
     kp    [label="KeyPanel.tsx\nsong key picker"];
     kt    [label="KeyTable.tsx\nnotes + diatonic chords\n(shared)"];
+    cd    [label="ChordDiagram.tsx\nchord box SVG"];
     il    [label="IntervalLegend.tsx\n(orphan / unused)", fillcolor="#f2e5e4", color="#b23a2e", style="rounded,filled,dashed"];
   }
 
@@ -54,7 +55,7 @@ digraph FretNavigator {
     fontname="Helvetica-Bold"; style="rounded,filled"; color="#e7f0e5";
     node [fillcolor="#f1f7ef"];
     fl [label="fretboardLayout.ts\nbuildFretboardModel()\n(pure geometry + highlights)"];
-    mt [label="music-theory/\nnotes · intervals · scales\nchords · harmony · fretboard"];
+    mt [label="music-theory/\nnotes · intervals · scales · chords\nharmony · chordShapes · fretboard"];
   }
 
   // ---------------- State + persistence ----------------
@@ -113,7 +114,9 @@ digraph FretNavigator {
   tc -> mt;
   td -> mt;
   sd -> mt;
+  kt -> cd;
   kt -> mt;
+  cd -> mt;
   kp -> mt;
   kp -> store;
   dash -> store;

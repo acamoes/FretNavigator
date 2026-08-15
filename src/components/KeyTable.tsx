@@ -1,4 +1,5 @@
-import { keySummary } from '../music-theory';
+import { chordShape, keySummary } from '../music-theory';
+import { ChordDiagram } from './ChordDiagram';
 
 interface Props {
   /** Key id, "<rootPc>:<scaleId>". */
@@ -31,29 +32,39 @@ export function KeyTable({ keyId, variant = 'screen' }: Props) {
       </div>
 
       {summary.chords.length > 0 ? (
-        <div className="key-table__scroll">
-          <table>
-            <thead>
-              <tr>
-                <th>Degree</th>
-                <th>Chord</th>
-                <th>7th</th>
-                <th>Function</th>
-              </tr>
-            </thead>
-            <tbody>
-              {summary.chords.map((c) => (
-                <tr key={c.degree}>
-                  <td className="key-table__numeral">{c.numeral}</td>
-                  <td className="key-table__chord">{c.triadName}</td>
-                  <td className="key-table__chord" title={c.seventhNotes}>
-                    {c.seventhName}
-                  </td>
-                  <td className="key-table__fn">{c.functionName}</td>
+        <div className="key-table__body">
+          <div className="key-table__scroll">
+            <table>
+              <thead>
+                <tr>
+                  <th>Degree</th>
+                  <th>Chord</th>
+                  <th>7th</th>
+                  <th>Function</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {summary.chords.map((c) => (
+                  <tr key={c.degree}>
+                    <td className="key-table__numeral">{c.numeral}</td>
+                    <td className="key-table__chord">{c.triadName}</td>
+                    <td className="key-table__chord" title={c.seventhNotes}>
+                      {c.seventhName}
+                    </td>
+                    <td className="key-table__fn">{c.functionName}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {/* How to play each degree, filling the space beside the table. */}
+          <div className="key-table__shapes">
+            {summary.chords.map((c) => {
+              const shape = chordShape(c.triadId);
+              return shape ? <ChordDiagram key={c.degree} shape={shape} name={c.triadName} /> : null;
+            })}
+          </div>
         </div>
       ) : (
         <p className="key-table__hint">

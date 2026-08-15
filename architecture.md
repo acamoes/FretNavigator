@@ -37,7 +37,8 @@ layer (`src/store/`), which persists locally — there is no network tier.
 | `Dashboard.tsx` | List of boards (create / open / duplicate / delete / import-export). |
 | `BoardView.tsx` | Edit one board: name/description, `StrummingEditor`, `KeyPanel`, the ordered list of **sections** (`FretboardCard` / `TabCard`), "+ Add fretboard" / "+ Add tab". |
 | `KeyPanel.tsx` | Board-level song-key picker + "Apply to all fretboards"; hosts `KeyTable`. |
-| `KeyTable.tsx` | Pure render of a key's notes + diatonic chords/degrees (editor + report). |
+| `KeyTable.tsx` | Pure render of a key's notes + diatonic chords/degrees, with a chord diagram per degree (editor + report). |
+| `ChordDiagram.tsx` | Pure SVG chord box (fingering grid, X/O, barre, "5fr" label). |
 | `FretboardCard.tsx` | One interactive fretboard section: controls + diagram + brush; owns transient local state (chord focus/refine). |
 | `FretboardControls.tsx` | Tuning, frets, capo, notes/intervals, key, chord progression. |
 | `FretboardDiagram.tsx` | **SVG renderer** of a fretboard model (interactive *or* static); shared by the card **and** the report. |
@@ -46,7 +47,7 @@ layer (`src/store/`), which persists locally — there is no network tier.
 | `StrummingDiagram.tsx` | Pure SVG render of a strumming pattern (editor + report). |
 | `TabCard.tsx` | Tab (tablature) section editor: keyboard grid + fretboard-click input. |
 | `TabDiagram.tsx` | Pure HTML render of a tab (editor + report). |
-| `ReportView.tsx` | Consolidated, print-ready page; **hybrid pagination**; renders the diagrams statically. |
+| `ReportView.tsx` | Consolidated, print-ready page; sections flow continuously and **the browser paginates** (`break-inside: avoid` per section, no JS chunking); renders the diagrams statically. |
 | `IntervalLegend.tsx` | ⚠️ Interval-color legend — **currently orphaned** (defined but imported nowhere; dead code). |
 
 ### Pure logic (no React, unit-tested)
@@ -58,8 +59,9 @@ layer (`src/store/`), which persists locally — there is no network tier.
 | `src/music-theory/scales.ts` | Scale/key formulas, `parseKeyId`. |
 | `src/music-theory/chords.ts` | Chord formulas, `chordToneRoles`, `parseChordId`, `chordDisplayName`. |
 | `src/music-theory/harmony.ts` | `keySummary()`: a key's letter-spelled notes + its diatonic triads/sevenths with roman numerals. |
+| `src/music-theory/chordShapes.ts` | `chordShape()`: curated guitar fingerings for the four triad types (standard tuning). |
 | `src/music-theory/fretboard.ts` | `TUNINGS`, `getTuning`, `pitchAt` (string+fret → pitch), inlay dots. |
-| `src/music-theory/index.ts` | Barrel re-exporting the six modules above. |
+| `src/music-theory/index.ts` | Barrel re-exporting the seven modules above. |
 
 ### State + Persistence ("backend" = local)
 | File | Role |
@@ -78,6 +80,7 @@ layer (`src/store/`), which persists locally — there is no network tier.
 - `src/music-theory/music-theory.test.ts` — music theory (notes, intervals, scales, chords, diatonic harmony).
 - `src/components/fretboardLayout.test.ts` — `buildFretboardModel` (highlights, `keep` voicing, refine).
 - `src/store/factories.test.ts` — factories, `normalizeSections`, clones, strumming/tab.
+- `src/music-theory/chordShapes.test.ts` — every shape replayed through the theory (right notes, four-fret window).
 
 ## Build / config / deploy
 - `vite.config.ts` — Vite + React plugin; `base = /FretNavigator/` in production; Vitest config.
