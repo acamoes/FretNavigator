@@ -1,9 +1,11 @@
 import { describe, it, expect } from 'vitest';
-import { TabSection } from '../types';
+import { ChordsSection, TabSection } from '../types';
 import {
   cloneBoard,
+  cloneSection,
   cloneTabSection,
   createBoard,
+  createChordsSection,
   createStrummingPattern,
   createTabSection,
   normalizeSections,
@@ -101,6 +103,54 @@ describe('sections', () => {
     expect(tab.columns[0].slurs).toEqual([2]); // deduped, non-integers dropped
     expect(tab.columns[1].annotation).toBeUndefined(); // not a string
     expect(tab.columns[1].slurs).toBeUndefined(); // empty -> absent
+  });
+
+  // normalizeSection's fallback turns any unrecognised kind into a fretboard,
+  // and merge() runs it on every rehydration — so an unhandled kind is not an
+  // error, it is silent data loss on the next reload.
+  it('a chords section survives normalization as a chords section', () => {
+    const raw = {
+      sections: [
+        {
+          kind: 'chords',
+          id: 'c1',
+          label: 'Verse',
+          boxes: [{ id: '0:maj', shape: 2 }, { id: '' }],
+        },
+      ],
+    };
+    const section = normalizeSections(raw)[0] as ChordsSection;
+
+    expect(section.kind).toBe('chords');
+    expect(section.label).toBe('Verse');
+    expect(section.boxes[0]).toEqual({ id: '0:maj', shape: 2 });
+    expect(section.boxes[1]).toEqual({ id: '', shape: undefined });
+  });
+
+  it('cleans junk inside chord boxes', () => {
+    const raw = {
+      sections: [
+        { kind: 'chords', id: 'c1', label: 'V', boxes: [{ id: 42, shape: -1 }, { id: '9:min', shape: 1.5 }, null] },
+      ],
+    };
+    const section = normalizeSections(raw)[0] as ChordsSection;
+
+    expect(section.boxes[0]).toEqual({ id: '', shape: undefined }); // non-string id, negative index
+    expect(section.boxes[1]).toEqual({ id: '9:min', shape: undefined }); // non-integer index
+    expect(section.boxes[2]).toEqual({ id: '', shape: undefined });
+  });
+
+  it('cloneSection keeps a chords section a chords section', () => {
+    const section = createChordsSection();
+    section.boxes[0] = { id: '0:maj7', shape: 1 };
+    const copy = cloneSection(section) as ChordsSection;
+
+    expect(copy.kind).toBe('chords');
+    expect(copy.id).not.toBe(section.id);
+    expect(copy.boxes[0]).toEqual({ id: '0:maj7', shape: 1 });
+
+    copy.boxes[0].id = '9:min';
+    expect(section.boxes[0].id).toBe('0:maj7'); // boxes are not shared
   });
 
   it('cloneTabSection copies annotations and does not share the slurs array', () => {

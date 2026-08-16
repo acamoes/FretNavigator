@@ -97,8 +97,30 @@ export interface TabSection {
   columns: TabColumn[];
 }
 
+/**
+ * One chord in a chords section: which chord, and which fingering of it.
+ *
+ * The field on ChordsSection is `boxes`, not `chords`: `migrate` walks every
+ * section indiscriminately writing `chords`/`chordId`, and Fretboard.chords is
+ * a different thing (ChordEntry[]).
+ */
+export interface ChordBox {
+  /** Chord id "<rootPc>:<typeId>", or '' while the box is still empty. */
+  id: string;
+  /** Chosen position: an index into chordShapes(id). */
+  shape?: number;
+}
+
+/** A chord grid: the chords of a song, drawn as fingering boxes. */
+export interface ChordsSection {
+  kind: 'chords';
+  id: string;
+  label: string;
+  boxes: ChordBox[];
+}
+
 /** A board holds an ordered, heterogeneous list of these. */
-export type Section = Fretboard | TabSection;
+export type Section = Fretboard | TabSection | ChordsSection;
 
 export interface Board {
   id: string;

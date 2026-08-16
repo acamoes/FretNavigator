@@ -34,7 +34,7 @@ digraph FretNavigator {
     node [fillcolor="#f2f7fa"];
     dash  [label="Dashboard.tsx"];
     bv    [label="BoardView.tsx"];
-    rv    [label="ReportView.tsx\nprint · hybrid paging"];
+    rv    [label="ReportView.tsx\nprint · continuous flow"];
     fc    [label="FretboardCard.tsx"];
     fctrl [label="FretboardControls.tsx"];
     fd    [label="FretboardDiagram.tsx\nSVG render (shared)"];
@@ -46,6 +46,7 @@ digraph FretNavigator {
     kp    [label="KeyPanel.tsx\nsong key picker"];
     kt    [label="KeyTable.tsx\nnotes + diatonic chords\n(shared)"];
     cd    [label="ChordDiagram.tsx\nchord box SVG"];
+    cc    [label="ChordsCard.tsx\nchord grid editor"];
     il    [label="IntervalLegend.tsx\n(orphan / unused)", fillcolor="#f2e5e4", color="#b23a2e", style="rounded,filled,dashed"];
   }
 
@@ -70,7 +71,7 @@ digraph FretNavigator {
     ls    [label="localStorage", shape=cylinder, fillcolor="#eaddca"];
   }
 
-  types [label="types.ts\nBoard · Section\nFretboard · TabSection · ...", shape=note, fillcolor="#fdf6df", color="#c7a53a"];
+  types [label="types.ts\nBoard · Section\nFretboard · TabSection\nChordsSection · ...", shape=note, fillcolor="#fdf6df", color="#c7a53a"];
 
   // ---------------- Tests ----------------
   subgraph cluster_tests {
@@ -94,6 +95,9 @@ digraph FretNavigator {
   bv -> kp;
   bv -> fc;
   bv -> tc;
+  bv -> cc;
+  cc -> cd;
+  cc -> mt;
   kp -> kt;
   fc -> fctrl;
   fc -> fd;
@@ -105,6 +109,7 @@ digraph FretNavigator {
   rv -> td;
   rv -> sd;
   rv -> kt;
+  rv -> cd;
 
   // ---------------- Edges: UI -> logic / state ----------------
   fd -> fl;
@@ -126,6 +131,7 @@ digraph FretNavigator {
   fctrl -> store;
   se -> store;
   tc -> store;
+  cc -> store;
   rv -> store;
 
   // ---------------- Edges: state internals ----------------

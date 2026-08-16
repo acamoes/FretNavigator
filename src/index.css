@@ -1020,6 +1020,67 @@ textarea:focus {
   fill: rgba(83, 65, 60, 0.07);
 }
 
+/* ---------- Chord grid (chords section) ---------- */
+.tag--chords {
+  background: #6a7f5c;
+  color: #fff;
+  border-color: #6a7f5c;
+}
+.chord-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(132px, 1fr));
+  gap: var(--md);
+  align-items: start;
+}
+.chord-box {
+  display: flex;
+  flex-direction: column;
+  gap: var(--xs);
+  padding: var(--sm);
+  border: 1px solid var(--border);
+  border-radius: var(--r-btn);
+  background: var(--surface);
+}
+.chord-box__pick {
+  display: flex;
+  align-items: center;
+  gap: var(--xs);
+}
+.chord-box__pick .dual {
+  flex: 1;
+  min-width: 0;
+}
+.chord-box__pick select {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-chip);
+  padding: 4px 6px;
+  font-family: var(--font);
+  font-size: 13px;
+  color: var(--text);
+  min-width: 0;
+}
+.chord-box__remove {
+  flex-shrink: 0;
+  color: var(--text-muted);
+}
+.chord-box__positions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--xs);
+  font-size: 12px;
+  color: var(--text-muted);
+}
+.chord-grid__add {
+  margin-top: var(--md);
+}
+/* The report shows finished chords only: named, and packed tighter. */
+.chord-grid--report {
+  grid-template-columns: repeat(auto-fill, minmax(84px, 1fr));
+  gap: var(--sm);
+}
+
 /* ---------- Tab (tablature) ---------- */
 .tag--tab {
   background: #4c7a99;
@@ -1685,10 +1746,17 @@ textarea:focus {
      starts a fresh page. It has to be padding, not margin: margins are dropped
      at a page boundary, padding is always drawn. */
   .report__fretboard,
-  .report__tab {
+  .report__tab,
+  .report__chords {
     break-inside: avoid;
     page-break-inside: avoid;
     padding: 5mm 0;
+  }
+  /* A printed chord box wants a fixed, readable size, not the screen's fluid
+     grid — otherwise a wide page stretches five chords across the whole sheet. */
+  .report__chords .chord-grid {
+    grid-template-columns: repeat(auto-fill, 26mm);
+    gap: 4mm;
   }
   .report__tab .tab-system {
     break-inside: avoid;

@@ -1,10 +1,11 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { Board, Fretboard, NoteStyle, SCHEMA_VERSION, SelectedNote, TabSection } from '../types';
+import { Board, ChordsSection, Fretboard, NoteStyle, SCHEMA_VERSION, SelectedNote, TabSection } from '../types';
 import {
   cloneBoard,
   cloneSection,
   createBoard,
+  createChordsSection,
   createFretboard,
   createTabSection,
   normalizeChords,
@@ -29,6 +30,8 @@ interface StoreState {
   // Section-level actions
   addTab: (boardId: string) => void;
   updateTab: (boardId: string, tabId: string, patch: Partial<TabSection>) => void;
+  addChords: (boardId: string) => void;
+  updateChords: (boardId: string, sectionId: string, patch: Partial<ChordsSection>) => void;
 
   // Fretboard-level actions
   addFretboard: (boardId: string) => void;
@@ -65,6 +68,14 @@ function mapTab(board: Board, tabId: string, fn: (t: TabSection) => TabSection):
   return {
     ...board,
     sections: board.sections.map((s) => (s.id === tabId && s.kind === 'tab' ? fn(s) : s)),
+  };
+}
+
+/** Apply a transform to one chords section within a board (ignores the rest). */
+function mapChords(board: Board, sectionId: string, fn: (c: ChordsSection) => ChordsSection): Board {
+  return {
+    ...board,
+    sections: board.sections.map((s) => (s.id === sectionId && s.kind === 'chords' ? fn(s) : s)),
   };
 }
 
@@ -117,6 +128,16 @@ export const useStore = create<StoreState>()(
       updateTab: (boardId, tabId, patch) =>
         set((s) => ({
           boards: mapBoard(s.boards, boardId, (b) => mapTab(b, tabId, (t) => ({ ...t, ...patch }))),
+        })),
+
+      addChords: (boardId) =>
+        set((s) => ({
+          boards: mapBoard(s.boards, boardId, (b) => ({ ...b, sections: [...b.sections, createChordsSection()] })),
+        })),
+
+      updateChords: (boardId, sectionId, patch) =>
+        set((s) => ({
+          boards: mapBoard(s.boards, boardId, (b) => mapChords(b, sectionId, (c) => ({ ...c, ...patch }))),
         })),
 
       addFretboard: (boardId) =>

@@ -396,3 +396,46 @@ the first page's top and the last page's bottom — `@page { margin: 0 }` has to
 stay (it is what suppresses the browser's header/footer, #6), so an interior page
 break relies on that section padding alone. A tab can now share a page with a
 fretboard, which #13 had accepted as impossible.
+
+## 18. A third section kind: chord grids
+**2026-08-16 · Accepted**
+
+**Context.** A board could hold fretboards and tabs, but not the most direct
+thing a song needs: its chords, drawn as fingering boxes.
+
+**Decision.** `ChordsSection { kind: 'chords', id, label, boxes: ChordBox[] }`,
+where a `ChordBox` is a chord id plus the index of the chosen fingering. Each box
+picks a chord and cycles through that chord's positions. `chordShapes.ts` grows
+from one shape to **all** positions and from 4 triad types to 12
+(`SHAPED_CHORD_TYPES`), and `ChordDiagram` gained an optional `shape` so an
+unfilled box draws a blank grid instead of needing a second component.
+
+- *The field is `boxes`, not `chords`.* `migrate` walks every section
+  indiscriminately writing `chords`/`chordId` onto it, so a field with that name
+  would be exposed to a legacy migration rewriting it; and `Fretboard.chords` is
+  a different type (`ChordEntry[]`).
+- *No `SCHEMA_VERSION` bump.* Nothing existing changes shape — a member is added
+  to a union. Old data has no chords sections and loads unchanged.
+- *The curated shape table was extended rather than replaced by a search.* Same
+  reasoning as #16: a voicing search needs octave-aware pitches the model lacks.
+  Positions come from the open shape plus the 6th- and 5th-string rootings,
+  deduped and sorted, which yields 2-3 per chord — enough to cycle, few enough to
+  stay recognisable.
+
+**Consequences.** Three branches decide whether a new kind survives, and none of
+them fails loudly: `normalizeSection`'s fallback **rewrites an unknown kind as a
+fretboard**, and `merge()` runs it on *every* rehydration, so a missed branch
+destroys the section on the next reload rather than at write time;
+`cloneSection`'s fallback does the same on duplicate and on import. Both are now
+explicit per kind and covered by tests that assert a chords section stays a
+chords section. `.report__chords` also had to join the print enumeration that
+grants `break-inside: avoid`, or the grid would split across pages.
+
+`sus2` has no 6th-string shape that fits four frets (the 2nd forces a span of 4),
+so it offers fewer positions than the other types. Widening the diagram to five
+rows would fix it at the cost of shrinking every other diagram, including the key
+table's — not worth it for one chord type. The shape table's safety net is a test
+that replays all ~400 generated positions through `chordToneRoles` + `pitchAt`:
+no note outside the chord, and no missing tone except the perfect 5th, which real
+voicings drop (the open C7, x32310, has no G) — while a b5 or #5 stays mandatory,
+keeping dim, aug and m7b5 strict.

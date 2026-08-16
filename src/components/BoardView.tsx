@@ -2,6 +2,7 @@ import { useBoard, useStore } from '../store/useStore';
 import { downloadBoard } from '../store/ioBoard';
 import { FretboardCard } from './FretboardCard';
 import { TabCard } from './TabCard';
+import { ChordsCard } from './ChordsCard';
 import { StrummingEditor } from './StrummingEditor';
 import { KeyPanel } from './KeyPanel';
 
@@ -17,6 +18,7 @@ export function BoardView({ boardId, onBack, onReport }: Props) {
   const updateBoardMeta = useStore((s) => s.updateBoardMeta);
   const addFretboard = useStore((s) => s.addFretboard);
   const addTab = useStore((s) => s.addTab);
+  const addChords = useStore((s) => s.addChords);
 
   if (!board) {
     return (
@@ -80,13 +82,12 @@ export function BoardView({ boardId, onBack, onReport }: Props) {
       <KeyPanel board={board} />
 
       <div className="board-view__fretboards">
-        {board.sections.map((section, i) =>
-          section.kind === 'fretboard' ? (
-            <FretboardCard key={section.id} board={board} fretboard={section} index={i} total={board.sections.length} />
-          ) : (
-            <TabCard key={section.id} board={board} tab={section} index={i} total={board.sections.length} />
-          ),
-        )}
+        {board.sections.map((section, i) => {
+          const shared = { key: section.id, board, index: i, total: board.sections.length };
+          if (section.kind === 'tab') return <TabCard {...shared} tab={section} />;
+          if (section.kind === 'chords') return <ChordsCard {...shared} section={section} />;
+          return <FretboardCard {...shared} fretboard={section} />;
+        })}
       </div>
 
       <div className="board-view__add no-print">
@@ -95,6 +96,9 @@ export function BoardView({ boardId, onBack, onReport }: Props) {
         </button>
         <button className="btn btn--ghost" onClick={() => addTab(board.id)}>
           + Add tab
+        </button>
+        <button className="btn btn--ghost" onClick={() => addChords(board.id)}>
+          + Add chords
         </button>
       </div>
     </div>

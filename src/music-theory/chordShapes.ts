@@ -1,14 +1,14 @@
 /**
- * Guitar fingerings for the triads a key is built from.
+ * Guitar fingerings: where a chord is actually played.
  *
  * A curated table, not a search. Finding voicings algorithmically would need
  * octave-aware pitches (the model only has pitch classes) plus playability
- * heuristics that produce awkward shapes easily; the degree table only ever
- * needs four triad types, so a small table is smaller, predictable, and gives
- * the shapes a guitarist actually recognizes.
+ * heuristics that produce awkward shapes easily. A table stays predictable and
+ * gives the shapes a guitarist recognizes; a unit test replays every entry
+ * through the theory, so a transcription slip fails the build.
  *
- * STANDARD TUNING ONLY. A board's key carries no tuning of its own, and
- * covering DADGAD/open G would require exactly the search this avoids.
+ * STANDARD TUNING ONLY. Chords here carry no tuning of their own, and covering
+ * DADGAD/open G would require exactly the search this avoids.
  */
 
 import { parseChordId } from './chords';
@@ -25,6 +25,22 @@ export interface ChordShape {
 
 const X = null;
 
+/** The chord types this module can draw, in picker order. */
+export const SHAPED_CHORD_TYPES = [
+  'maj',
+  'min',
+  'dim',
+  'aug',
+  'maj7',
+  '7',
+  'm7',
+  'm7b5',
+  'sus2',
+  'sus4',
+  '6',
+  'm6',
+] as const;
+
 /**
  * Open shapes win when they exist: in the key of C you want the open C, not a
  * barre at the 8th fret. Keyed by the app's usual "<rootPc>:<typeId>" id.
@@ -38,6 +54,21 @@ const OPEN_SHAPES: Record<string, (number | null)[]> = {
   '2:min': [X, X, 0, 2, 3, 1], // Dm
   '4:min': [0, 2, 2, 0, 0, 0], // Em
   '9:min': [X, 0, 2, 2, 1, 0], // Am
+  '0:maj7': [X, 3, 2, 0, 0, 0], // Cmaj7
+  '0:7': [X, 3, 2, 3, 1, 0], // C7
+  '0:6': [X, 3, 2, 2, 1, 0], // C6
+  '2:7': [X, X, 0, 2, 1, 2], // D7
+  '2:m7': [X, X, 0, 2, 1, 1], // Dm7
+  '2:sus2': [X, X, 0, 2, 3, 0], // Dsus2
+  '2:sus4': [X, X, 0, 2, 3, 3], // Dsus4
+  '4:7': [0, 2, 0, 1, 0, 0], // E7
+  '4:m7': [0, 2, 0, 0, 0, 0], // Em7
+  '4:sus4': [0, 2, 2, 2, 0, 0], // Esus4
+  '7:7': [3, 2, 0, 0, 0, 1], // G7
+  '9:7': [X, 0, 2, 0, 2, 0], // A7
+  '9:m7': [X, 0, 2, 0, 1, 0], // Am7
+  '9:sus2': [X, 0, 2, 2, 0, 0], // Asus2
+  '9:sus4': [X, 0, 2, 2, 3, 0], // Asus4
 };
 
 /**
@@ -70,6 +101,37 @@ const MOVABLE: Record<string, MovableShape[]> = {
     { rootString: 0, offsets: [0, 3, 2, 1, X, X], barred: false },
     { rootString: 1, offsets: [X, 0, 3, 2, 2, X], barred: false },
   ],
+  maj7: [
+    { rootString: 0, offsets: [0, 2, 1, 1, 0, 0], barred: true },
+    { rootString: 1, offsets: [X, 0, 2, 1, 2, 0], barred: true },
+  ],
+  '7': [
+    { rootString: 0, offsets: [0, 2, 0, 1, 0, 0], barred: true },
+    { rootString: 1, offsets: [X, 0, 2, 0, 2, 0], barred: true },
+  ],
+  m7: [
+    { rootString: 0, offsets: [0, 2, 0, 0, 0, 0], barred: true },
+    { rootString: 1, offsets: [X, 0, 2, 0, 1, 0], barred: true },
+  ],
+  m7b5: [
+    { rootString: 0, offsets: [0, 1, 0, 0, X, X], barred: false },
+    { rootString: 1, offsets: [X, 0, 1, 0, 1, X], barred: false },
+  ],
+  // No E-string sus2 fits four frets — the 2nd forces `0 2 4 4 0 0` (span 4),
+  // so this type gets one movable position instead of two.
+  sus2: [{ rootString: 1, offsets: [X, 0, 2, 2, 0, 0], barred: true }],
+  sus4: [
+    { rootString: 0, offsets: [0, 2, 2, 2, 0, 0], barred: true },
+    { rootString: 1, offsets: [X, 0, 2, 2, 3, 0], barred: true },
+  ],
+  '6': [
+    { rootString: 0, offsets: [0, 2, 2, 1, 2, 0], barred: true },
+    { rootString: 1, offsets: [X, 0, 2, 2, 2, 2], barred: true },
+  ],
+  m6: [
+    { rootString: 0, offsets: [0, 2, 2, 0, 2, 0], barred: true },
+    { rootString: 1, offsets: [X, 0, 2, 2, 1, 2], barred: true },
+  ],
 };
 
 /** Open-string pitch classes in standard tuning, low → high (E A D G B E). */
@@ -80,33 +142,49 @@ function rootFret(stringIndex: number, pc: PitchClass): number {
   return mod12(pc - STANDARD[stringIndex]);
 }
 
-/**
- * A playable fingering for a chord id, or null if the type isn't one of the
- * triads a key produces (maj / min / dim / aug).
- */
-export function chordShape(id: string): ChordShape | null {
-  const parsed = parseChordId(id);
-  if (!parsed) return null;
-
-  const open = OPEN_SHAPES[id];
-  if (open) return { frets: [...open], baseFret: 1 };
-
-  const candidates = MOVABLE[parsed.type.id];
-  if (!candidates) return null;
-
-  // Lowest position wins, so Bm barres at the 2nd fret rather than the 7th;
-  // a tie keeps the first candidate (the E shape).
-  let best: { shape: MovableShape; fret: number } | null = null;
-  for (const shape of candidates) {
-    const fret = rootFret(shape.rootString, parsed.root);
-    // Fret 0 would mean the open shape, which the table above already covers.
-    const at = fret === 0 ? 12 : fret;
-    if (!best || at < best.fret) best = { shape, fret: at };
-  }
-  if (!best) return null;
-
-  const { shape, fret } = best;
+/** Place a movable pattern at a root fret, working out the barre span. */
+function place(shape: MovableShape, fret: number): ChordShape {
   const frets = shape.offsets.map((o) => (o === null ? null : o + fret));
-  const barre = shape.barred ? { fret, from: shape.rootString, to: 5 } : undefined;
-  return { frets, baseFret: fret, barre };
+  // At the nut the open strings do the barre's job, so there is nothing to bar.
+  if (!shape.barred || fret === 0) return { frets, baseFret: Math.max(1, fret) };
+
+  // The barre runs from the root to the last string still pressed at that fret.
+  let last: number = shape.rootString;
+  shape.offsets.forEach((o, si) => {
+    if (o === 0) last = si;
+  });
+  return { frets, baseFret: fret, barre: { fret, from: shape.rootString, to: last } };
+}
+
+/**
+ * Every playable position for a chord, lowest first. Empty when the type isn't
+ * one this module draws (see SHAPED_CHORD_TYPES).
+ */
+export function chordShapes(id: string): ChordShape[] {
+  const parsed = parseChordId(id);
+  if (!parsed) return [];
+
+  const found: ChordShape[] = [];
+  const open = OPEN_SHAPES[id];
+  if (open) found.push({ frets: [...open], baseFret: 1 });
+
+  for (const shape of MOVABLE[parsed.type.id] ?? []) {
+    found.push(place(shape, rootFret(shape.rootString, parsed.root)));
+  }
+
+  // A movable landing at the nut can reproduce the open shape exactly.
+  const seen = new Set<string>();
+  return found
+    .filter((s) => {
+      const key = s.frets.join(',');
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    })
+    .sort((a, b) => a.baseFret - b.baseFret);
+}
+
+/** The lowest position for a chord, or null if there is no shape for it. */
+export function chordShape(id: string): ChordShape | null {
+  return chordShapes(id)[0] ?? null;
 }

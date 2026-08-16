@@ -46,6 +46,7 @@ layer (`src/store/`), which persists locally — there is no network tier.
 | `StrummingEditor.tsx` | Board-level strumming pattern editor (palette). |
 | `StrummingDiagram.tsx` | Pure SVG render of a strumming pattern (editor + report). |
 | `TabCard.tsx` | Tab (tablature) section editor: keyboard grid + fretboard-click input. |
+| `ChordsCard.tsx` | Chord-grid section editor: a box per chord, with a picker and a position cycler. |
 | `TabDiagram.tsx` | Pure HTML render of a tab (editor + report). |
 | `ReportView.tsx` | Consolidated, print-ready page; sections flow continuously and **the browser paginates** (`break-inside: avoid` per section, no JS chunking); renders the diagrams statically. |
 | `IntervalLegend.tsx` | ⚠️ Interval-color legend — **currently orphaned** (defined but imported nowhere; dead code). |
@@ -59,7 +60,7 @@ layer (`src/store/`), which persists locally — there is no network tier.
 | `src/music-theory/scales.ts` | Scale/key formulas, `parseKeyId`. |
 | `src/music-theory/chords.ts` | Chord formulas, `chordToneRoles`, `parseChordId`, `chordDisplayName`. |
 | `src/music-theory/harmony.ts` | `keySummary()`: a key's letter-spelled notes + its diatonic triads/sevenths with roman numerals. |
-| `src/music-theory/chordShapes.ts` | `chordShape()`: curated guitar fingerings for the four triad types (standard tuning). |
+| `src/music-theory/chordShapes.ts` | `chordShapes()`: curated guitar fingerings — every position of each chord, 12 chord types, standard tuning. |
 | `src/music-theory/fretboard.ts` | `TUNINGS`, `getTuning`, `pitchAt` (string+fret → pitch), inlay dots. |
 | `src/music-theory/index.ts` | Barrel re-exporting the seven modules above. |
 
@@ -74,7 +75,7 @@ layer (`src/store/`), which persists locally — there is no network tier.
 ### Types
 | File | Role |
 | --- | --- |
-| `src/types.ts` | Domain model: `Board` (incl. optional `bpm`/`keyId`/`strumming`), `Section` (= `Fretboard \| TabSection`), `Fretboard`, `TabSection`/`TabColumn`, `ChordEntry`, `SelectedNote`, `StrummingPattern`, `NoteStyle`, `SCHEMA_VERSION`. Imported almost everywhere. |
+| `src/types.ts` | Domain model: `Board` (incl. optional `bpm`/`keyId`/`strumming`), `Section` (= `Fretboard \| TabSection \| ChordsSection`), `Fretboard`, `TabSection`/`TabColumn`, `ChordsSection`/`ChordBox`, `ChordEntry`, `SelectedNote`, `StrummingPattern`, `NoteStyle`, `SCHEMA_VERSION`. Imported almost everywhere. **A new `Section` kind must get its own branch in `normalizeSection` and `cloneSection` — both fall back to "fretboard".** |
 
 ## Tests (Vitest, co-located `*.test.ts`, run with `npm test`)
 - `src/music-theory/music-theory.test.ts` — music theory (notes, intervals, scales, chords, diatonic harmony).

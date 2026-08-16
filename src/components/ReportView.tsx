@@ -4,7 +4,8 @@ import { StrummingDiagram } from './StrummingDiagram';
 import { TabDiagram } from './TabDiagram';
 import { KeyTable } from './KeyTable';
 import { Fretboard, StrummingPattern } from '../types';
-import { chordDisplayName, getTuning, noteName, parseKeyId } from '../music-theory';
+import { chordDisplayName, chordShapes, getTuning, noteName, parseKeyId } from '../music-theory';
+import { ChordDiagram } from './ChordDiagram';
 import { chordColor } from '../store/colorPresets';
 
 /** True if the pattern has at least one actual strum (not all rests). */
@@ -83,6 +84,22 @@ export function ReportView({ boardId, onBack }: Props) {
               </div>
               {/* Compact PDF density; wraps to the A4 page width, not the screen. */}
               <TabDiagram tab={section} variant="print" />
+            </section>
+          ) : section.kind === 'chords' ? (
+            <section key={section.id} className="report__chords">
+              <div className="report__fb-head">
+                <h2 className="report__fb-title">{section.label}</h2>
+              </div>
+              <div className="chord-grid chord-grid--report">
+                {section.boxes.map((box, i) => {
+                  const shapes = box.id ? chordShapes(box.id) : [];
+                  const shape = shapes[Math.min(box.shape ?? 0, Math.max(0, shapes.length - 1))];
+                  // An unfilled box is an editing state, not something to print.
+                  return shape ? (
+                    <ChordDiagram key={i} shape={shape} name={chordDisplayName(box.id)} />
+                  ) : null;
+                })}
+              </div>
             </section>
           ) : (
             <section key={section.id} className="report__fretboard">

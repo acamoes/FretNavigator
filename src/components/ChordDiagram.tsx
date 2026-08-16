@@ -1,10 +1,14 @@
 import { ChordShape } from '../music-theory';
 
 interface Props {
-  shape: ChordShape;
+  /** Omit for a blank grid — an unfilled box in a chord grid. */
+  shape?: ChordShape | null;
   /** Chord symbol drawn above the box, e.g. "Bm". */
-  name: string;
+  name?: string;
 }
+
+/** A blank grid: nothing fretted, nothing muted, nothing open. */
+const EMPTY: ChordShape = { frets: [], baseFret: 1 };
 
 /**
  * A chord box: the classic songbook fingering grid. Sized by its container —
@@ -30,7 +34,7 @@ const stringX = (si: number) => GRID_LEFT + si * STRING_GAP;
 const fretY = (fret: number, baseFret: number) => GRID_TOP + (fret - baseFret + 0.5) * FRET_GAP;
 
 export function ChordDiagram({ shape, name }: Props) {
-  const { frets, baseFret, barre } = shape;
+  const { frets, baseFret, barre } = shape ?? EMPTY;
   const atNut = baseFret === 1;
 
   return (
@@ -39,11 +43,13 @@ export function ChordDiagram({ shape, name }: Props) {
       viewBox={`0 0 ${GRID_RIGHT + 11} ${GRID_BOTTOM + 3}`}
       preserveAspectRatio="xMidYMid meet"
       role="img"
-      aria-label={`${name} chord diagram`}
+      aria-label={name ? `${name} chord diagram` : 'Empty chord diagram'}
     >
-      <text className="chord-dia__name" x={(GRID_LEFT + GRID_RIGHT) / 2} y={11} textAnchor="middle">
-        {name}
-      </text>
+      {name && (
+        <text className="chord-dia__name" x={(GRID_LEFT + GRID_RIGHT) / 2} y={11} textAnchor="middle">
+          {name}
+        </text>
+      )}
 
       {/* Muted (×) and open (○) markers, above the nut. */}
       {frets.map((fret, si) =>

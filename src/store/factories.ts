@@ -1,4 +1,14 @@
-import { Board, ChordEntry, Fretboard, Section, StrummingPattern, TabColumn, TabSection } from '../types';
+import {
+  Board,
+  ChordBox,
+  ChordEntry,
+  ChordsSection,
+  Fretboard,
+  Section,
+  StrummingPattern,
+  TabColumn,
+  TabSection,
+} from '../types';
 import { getTuning } from '../music-theory';
 
 /** A blank one-bar strumming pattern: 8 rest slots (1 & 2 & 3 & 4 &). */
@@ -55,6 +65,28 @@ export function createTabSection(tuningId = 'standard'): TabSection {
   return { kind: 'tab', id: uid('tab'), label: 'Solo', tuningId, columns };
 }
 
+/** A blank chord grid: five empty boxes, ready to be filled in. */
+export function createChordsSection(): ChordsSection {
+  return {
+    kind: 'chords',
+    id: uid('chords'),
+    label: 'Chords',
+    boxes: Array.from({ length: 5 }, () => ({ id: '' })),
+  };
+}
+
+/** Coerce persisted/imported data into clean chord boxes. */
+function normalizeChordBoxes(raw: unknown): ChordBox[] {
+  if (!Array.isArray(raw)) return [];
+  return raw.map((b) => {
+    const box = (b ?? {}) as { id?: unknown; shape?: unknown };
+    return {
+      id: typeof box.id === 'string' ? box.id : '',
+      shape: Number.isInteger(box.shape) && (box.shape as number) >= 0 ? (box.shape as number) : undefined,
+    };
+  });
+}
+
 /** Slur string indices, de-duped and sorted; undefined when there are none. */
 function normalizeSlurs(raw: unknown): number[] | undefined {
   if (!Array.isArray(raw)) return undefined;
@@ -89,7 +121,17 @@ function normalizeSection(raw: unknown): Section | null {
       columns: normalizeTabColumns(s.columns),
     };
   }
-  // Anything else is a fretboard (legacy sections had no `kind`).
+  if (s.kind === 'chords') {
+    return {
+      kind: 'chords',
+      id: typeof s.id === 'string' ? s.id : uid('chords'),
+      label: typeof s.label === 'string' ? s.label : 'Chords',
+      boxes: normalizeChordBoxes(s.boxes),
+    };
+  }
+  // Anything else is a fretboard (legacy sections had no `kind`). Every new
+  // kind needs its own branch ABOVE this line, or it is silently rewritten as a
+  // malformed fretboard on the next load — merge() runs this on every rehydration.
   return { ...(raw as Fretboard), kind: 'fretboard', chords: normalizeChords(s.chords) };
 }
 
@@ -143,9 +185,26 @@ export function cloneTabSection(tab: TabSection, label?: string): TabSection {
   };
 }
 
+/** Deep-clone a chords section with a fresh id. */
+export function cloneChordsSection(section: ChordsSection, label?: string): ChordsSection {
+  return {
+    ...section,
+    id: uid('chords'),
+    label: label ?? `${section.label} (copy)`,
+    boxes: section.boxes.map((b) => ({ ...b })),
+  };
+}
+
 /** Deep-clone any section, preserving its kind. */
 export function cloneSection(section: Section, label?: string): Section {
-  return section.kind === 'tab' ? cloneTabSection(section, label) : cloneFretboard(section, label);
+  switch (section.kind) {
+    case 'tab':
+      return cloneTabSection(section, label);
+    case 'chords':
+      return cloneChordsSection(section, label);
+    default:
+      return cloneFretboard(section, label);
+  }
 }
 
 /** Deep-clone a board with fresh ids throughout. */

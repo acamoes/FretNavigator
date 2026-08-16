@@ -1,10 +1,13 @@
 import { describe, it, expect } from 'vitest';
-import { createBoard, createFretboard, createTabSection } from './factories';
+import { createBoard, createChordsSection, createFretboard, createTabSection } from './factories';
 import { deserializeBoards, serializeBoard, serializeLibrary } from './ioBoard';
 
 const library = () => [
   createBoard({ name: 'Esta Cidade', keyId: '4:minor', bpm: 120 }),
-  createBoard({ name: 'Segunda', sections: [createFretboard({ label: 'Rhythm' }), createTabSection()] }),
+  createBoard({
+    name: 'Segunda',
+    sections: [createFretboard({ label: 'Rhythm' }), createTabSection(), createChordsSection()],
+  }),
   createBoard({ name: 'Terceira' }),
 ];
 
@@ -17,7 +20,7 @@ describe('library export / import', () => {
     expect(back.map((b) => b.name)).toEqual(['Esta Cidade', 'Segunda', 'Terceira']);
     expect(back[0].keyId).toBe('4:minor');
     expect(back[0].bpm).toBe(120);
-    expect(back[1].sections.map((s) => s.kind)).toEqual(['fretboard', 'tab']);
+    expect(back[1].sections.map((s) => s.kind)).toEqual(['fretboard', 'tab', 'chords']);
   });
 
   it('reads a single-board file too, so one Import button serves both', () => {

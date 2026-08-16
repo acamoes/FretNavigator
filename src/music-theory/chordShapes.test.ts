@@ -1,5 +1,14 @@
 import { describe, it, expect } from 'vitest';
-import { ALL_PITCH_CLASSES, chordId, chordShape, chordToneRoles, pitchAt } from './index';
+import {
+  ALL_PITCH_CLASSES,
+  chordId,
+  chordShape,
+  chordShapes,
+  chordToneRoles,
+  mod12,
+  pitchAt,
+  SHAPED_CHORD_TYPES,
+} from './index';
 
 /** Standard tuning open strings, low → high (E A D G B E). */
 const STANDARD = [4, 9, 2, 7, 11, 4];
@@ -31,43 +40,87 @@ describe('chord shapes', () => {
     expect(b.barre).toBeUndefined();
   });
 
-  it('returns null for chords a key never produces, and for junk', () => {
-    expect(chordShape(chordId(0, 'maj7'))).toBeNull(); // sevenths aren't drawn
-    expect(chordShape('99:bogus')).toBeNull();
-    expect(chordShape('')).toBeNull();
+  it('offers several positions for the same chord, lowest first', () => {
+    const positions = chordShapes(chordId(0, 'maj')); // C
+    expect(positions.length).toBeGreaterThanOrEqual(3);
+    expect(positions[0].frets).toEqual([null, 3, 2, 0, 1, 0]); // open C
+    expect(positions.map((p) => p.baseFret)).toEqual([...positions.map((p) => p.baseFret)].sort((a, b) => a - b));
+    // Open, A-shape barre at 3, E-shape barre at 8.
+    expect(positions.map((p) => p.baseFret)).toEqual([1, 3, 8]);
   });
 
-  // The table is hand-written, so check every entry against the theory the app
-  // already trusts: a shape must sound the chord's pitch classes and nothing else.
-  it('every shape sounds exactly its chord, for all 12 roots', () => {
-    for (const type of ['maj', 'min', 'dim', 'aug']) {
+  it('never lists the same fingering twice', () => {
+    for (const type of SHAPED_CHORD_TYPES) {
       for (const root of ALL_PITCH_CLASSES) {
-        const id = chordId(root, type);
-        const shape = chordShape(id);
-        expect(shape, `no shape for ${id}`).not.toBeNull();
-
-        const want = new Set(chordToneRoles(id).keys());
-        const sounded = new Set(
-          shape!.frets.flatMap((fret, si) => (fret === null ? [] : [pitchAt(STANDARD[si], fret)])),
-        );
-
-        // No wrong notes, and the full triad is present (root, 3rd, 5th).
-        for (const pc of sounded) {
-          expect([...want], `${id} sounds ${pc}, not in the chord`).toContain(pc);
-        }
-        expect([...sounded].sort(), `${id} is missing chord tones`).toEqual([...want].sort());
+        const shapes = chordShapes(chordId(root, type));
+        const keys = shapes.map((s) => s.frets.join(','));
+        expect(new Set(keys).size, `${chordId(root, type)} repeats a shape`).toBe(keys.length);
       }
     }
   });
 
-  it('every shape stays within a four-fret window', () => {
-    for (const type of ['maj', 'min', 'dim', 'aug']) {
+  it('returns nothing for chords it cannot draw, and for junk', () => {
+    expect(chordShapes(chordId(0, 'add9'))).toEqual([]);
+    expect(chordShape(chordId(0, 'add9'))).toBeNull();
+    expect(chordShapes('99:bogus')).toEqual([]);
+    expect(chordShape('')).toBeNull();
+  });
+
+  // The table is hand-written, so check every entry against the theory the app
+  // already trusts. Two rules: never a note outside the chord, and never a
+  // missing tone — except the perfect 5th, which guitar voicings drop routinely
+  // (the open C7, x32310, has no G). A b5 or #5 is characteristic, not
+  // droppable, so this stays strict for dim, aug and m7b5.
+  it('every position of every chord sounds that chord and nothing else', () => {
+    for (const type of SHAPED_CHORD_TYPES) {
       for (const root of ALL_PITCH_CLASSES) {
         const id = chordId(root, type);
-        const { frets, baseFret } = chordShape(id)!;
-        const fretted = frets.filter((f): f is number => f !== null && f > 0);
-        const span = Math.max(...fretted) - baseFret;
-        expect(span, `${id} spans more than the diagram's 4 rows`).toBeLessThan(4);
+        const shapes = chordShapes(id);
+        expect(shapes.length, `no shape for ${id}`).toBeGreaterThan(0);
+
+        const want = new Set(chordToneRoles(id).keys());
+        const perfectFifth = mod12(root + 7);
+
+        for (const shape of shapes) {
+          const sounded = new Set(
+            shape.frets.flatMap((fret, si) => (fret === null ? [] : [pitchAt(STANDARD[si], fret)])),
+          );
+          const where = `${id} at fret ${shape.baseFret}`;
+
+          for (const pc of sounded) {
+            expect([...want], `${where} sounds ${pc}, not in the chord`).toContain(pc);
+          }
+          const missing = [...want].filter((pc) => !sounded.has(pc));
+          expect(missing.filter((pc) => pc !== perfectFifth), `${where} drops more than the 5th`).toEqual([]);
+          // And the root is never optional.
+          expect(sounded.has(root), `${where} has no root`).toBe(true);
+        }
+      }
+    }
+  });
+
+  it('every position fits the diagram’s four-fret window', () => {
+    for (const type of SHAPED_CHORD_TYPES) {
+      for (const root of ALL_PITCH_CLASSES) {
+        const id = chordId(root, type);
+        for (const { frets, baseFret } of chordShapes(id)) {
+          const fretted = frets.filter((f): f is number => f !== null && f > 0);
+          const span = Math.max(...fretted) - baseFret;
+          expect(span, `${id} at fret ${baseFret} spans more than 4 rows`).toBeLessThan(4);
+        }
+      }
+    }
+  });
+
+  it('a barre never reaches past the strings the shape actually plays', () => {
+    for (const type of SHAPED_CHORD_TYPES) {
+      for (const root of ALL_PITCH_CLASSES) {
+        const id = chordId(root, type);
+        for (const { frets, barre } of chordShapes(id)) {
+          if (!barre) continue;
+          expect(frets[barre.to], `${id} barres to a muted string`).not.toBeNull();
+          expect(frets[barre.from], `${id} barres from a muted string`).not.toBeNull();
+        }
       }
     }
   });
