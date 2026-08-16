@@ -595,9 +595,11 @@ textarea:focus {
   fill: var(--text-muted);
   font-size: 8px;
 }
+/* Sized so even "11fr" clears the viewBox's left margin (see ChordDiagram). */
 .chord-dia__fr {
-  fill: var(--text-muted);
-  font-size: 7px;
+  fill: var(--text-secondary);
+  font-size: 6.5px;
+  font-weight: 600;
 }
 
 /* Table sizes to its content: the slack belongs to the diagrams beside it. */
@@ -1028,7 +1030,8 @@ textarea:focus {
 }
 .chord-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(132px, 1fr));
+  /* Wide enough for "A#" + "m7b5" + the remove button without clipping. */
+  grid-template-columns: repeat(auto-fill, minmax(164px, 1fr));
   gap: var(--md);
   align-items: start;
 }
@@ -1049,16 +1052,25 @@ textarea:focus {
 .chord-box__pick .dual {
   flex: 1;
   min-width: 0;
+  gap: var(--xs);
 }
 .chord-box__pick select {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--r-chip);
-  padding: 4px 6px;
+  padding: 4px 2px 4px 6px;
   font-family: var(--font);
   font-size: 13px;
   color: var(--text);
   min-width: 0;
+}
+/* The root needs room for "A#", the type for "m7b5" — an even split starves
+   the type select and clips it to a single character. */
+.chord-box__pick select:first-child {
+  flex: 0 0 54px;
+}
+.chord-box__pick select:last-child {
+  flex: 1 1 auto;
 }
 .chord-box__remove {
   flex-shrink: 0;

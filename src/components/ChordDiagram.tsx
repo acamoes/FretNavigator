@@ -22,7 +22,13 @@ const EMPTY: ChordShape = { frets: [], baseFret: 1 };
 
 const ROWS = 4; // every shape fits a four-fret window (enforced by a unit test)
 const STRINGS = 6;
-const GRID_LEFT = 11;
+/**
+ * The side margin has to hold the position label ("11fr", right-aligned against
+ * the grid) — at 11 units it clipped the number and only "fr" survived. Both
+ * sides get it so the grid stays centred in the box.
+ */
+const SIDE = 17;
+const GRID_LEFT = SIDE;
 const GRID_TOP = 27;
 const STRING_GAP = 9.6;
 const FRET_GAP = 12;
@@ -40,7 +46,7 @@ export function ChordDiagram({ shape, name }: Props) {
   return (
     <svg
       className="chord-dia"
-      viewBox={`0 0 ${GRID_RIGHT + 11} ${GRID_BOTTOM + 3}`}
+      viewBox={`0 0 ${GRID_RIGHT + SIDE} ${GRID_BOTTOM + 3}`}
       preserveAspectRatio="xMidYMid meet"
       role="img"
       aria-label={name ? `${name} chord diagram` : 'Empty chord diagram'}
@@ -83,9 +89,10 @@ export function ChordDiagram({ shape, name }: Props) {
         />
       ))}
 
-      {/* Away from the nut, say where we are instead of drawing a false one. */}
+      {/* Away from the nut, say where we are instead of drawing a false one.
+          Essential for barre chords — the shape alone doesn't say which fret. */}
       {!atNut && (
-        <text className="chord-dia__fr" x={GRID_LEFT - 4} y={fretY(baseFret, baseFret) + 2} textAnchor="end">
+        <text className="chord-dia__fr" x={GRID_LEFT - 3} y={fretY(baseFret, baseFret) + 2} textAnchor="end">
           {baseFret}fr
         </text>
       )}
