@@ -1,6 +1,6 @@
 import { useRef } from 'react';
 import { useStore } from '../store/useStore';
-import { deserializeBoard, downloadBoard } from '../store/ioBoard';
+import { deserializeBoards, downloadBoard, downloadLibrary } from '../store/ioBoard';
 
 interface Props {
   onOpenBoard: (boardId: string) => void;
@@ -12,15 +12,17 @@ export function Dashboard({ onOpenBoard }: Props) {
   const addBoard = useStore((s) => s.addBoard);
   const deleteBoard = useStore((s) => s.deleteBoard);
   const duplicateBoard = useStore((s) => s.duplicateBoard);
-  const importBoard = useStore((s) => s.importBoard);
+  const importBoards = useStore((s) => s.importBoards);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const handleImport = async (file: File) => {
     try {
       const text = await file.text();
-      const board = deserializeBoard(text);
-      const id = importBoard(board);
-      onOpenBoard(id);
+      const ids = importBoards(deserializeBoards(text));
+      // Jump straight into a single board; a whole library stays on the list,
+      // where you can see everything that just arrived.
+      if (ids.length === 1) onOpenBoard(ids[0]);
+      else alert(`Imported ${ids.length} boards.`);
     } catch (err) {
       alert(`Import failed: ${(err as Error).message}`);
     }
@@ -38,9 +40,15 @@ export function Dashboard({ onOpenBoard }: Props) {
         <div className="dashboard__actions">
           <button
             className="btn btn--ghost"
-            onClick={() => fileRef.current?.click()}
+            disabled={boards.length === 0}
+            title={boards.length === 0 ? 'No boards to export yet' : 'Save every board to one file'}
+            onClick={() => downloadLibrary(boards)}
           >
-            Import board
+            Export all
+          </button>
+          {/* Takes a single-board file or a whole library — same button. */}
+          <button className="btn btn--ghost" onClick={() => fileRef.current?.click()}>
+            Import
           </button>
           <button
             className="btn btn--primary"

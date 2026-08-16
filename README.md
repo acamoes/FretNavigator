@@ -23,7 +23,7 @@ Built with **React + TypeScript + Vite**, Zustand for state, and a pure, testabl
 - **Chord voicings.** Focus a chord and _"Select notes to keep"_ → click the exact positions of a shape, then **Remove Unselected Notes** to narrow that chord to your voicing.
 - **Manual note pinning** with a color brush: preset fills + independent **outline** presets + free color pickers + dashed outline.
 - **Report view.** A clean, consolidated, print-ready page of every fretboard — print to PDF via the browser.
-- **Local persistence** in `localStorage` (versioned schema with automatic migrations) and **per-board JSON export/import**.
+- **Local persistence** in `localStorage` (versioned schema with automatic migrations), **per-board JSON export/import**, and **Export all** — every board in one file, for a backup or to move to another browser. Import takes either file.
 
 ## Getting started
 

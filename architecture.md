@@ -34,7 +34,7 @@ layer (`src/store/`), which persists locally — there is no network tier.
 ### UI / Frontend (`src/components/`)
 | File | Role |
 | --- | --- |
-| `Dashboard.tsx` | List of boards (create / open / duplicate / delete / import-export). |
+| `Dashboard.tsx` | List of boards (create / open / duplicate / delete; per-board export, **Export all**, and one Import that takes either file shape). |
 | `BoardView.tsx` | Edit one board: name/description, `StrummingEditor`, `KeyPanel`, the ordered list of **sections** (`FretboardCard` / `TabCard`), "+ Add fretboard" / "+ Add tab". |
 | `KeyPanel.tsx` | Board-level song-key picker + "Apply to all fretboards"; hosts `KeyTable`. |
 | `KeyTable.tsx` | Pure render of a key's notes + diatonic chords/degrees, with a chord diagram per degree (editor + report). |
@@ -69,7 +69,7 @@ layer (`src/store/`), which persists locally — there is no network tier.
 | `src/store/useStore.ts` | The **Zustand store**: `boards` + all actions (board / section / fretboard / tab / note level); `persist` config with `version = SCHEMA_VERSION`; `migrate()` + `merge()` (self-heal via `normalizeSections`/`normalizeChords`); `useBoard` selector. Writes to `localStorage`. |
 | `src/store/factories.ts` | Constructors + normalizers: `createBoard/createFretboard/createTabSection/createStrummingPattern`, `clone*`, `normalizeChords/normalizeSections`, `uid`. |
 | `src/store/colorPresets.ts` | Color palettes (brush, `CHORD_PALETTE`, default note style). |
-| `src/store/ioBoard.ts` | Per-board JSON export/import (`serialize/deserialize/downloadBoard`). |
+| `src/store/ioBoard.ts` | JSON export/import: one board (`downloadBoard`) or the whole library (`downloadLibrary`); `deserializeBoards` reads either shape. |
 
 ### Types
 | File | Role |
@@ -80,6 +80,7 @@ layer (`src/store/`), which persists locally — there is no network tier.
 - `src/music-theory/music-theory.test.ts` — music theory (notes, intervals, scales, chords, diatonic harmony).
 - `src/components/fretboardLayout.test.ts` — `buildFretboardModel` (highlights, `keep` voicing, refine).
 - `src/store/factories.test.ts` — factories, `normalizeSections`, clones, strumming/tab.
+- `src/store/ioBoard.test.ts` — export/import round trip (library + single board, legacy and junk files).
 - `src/music-theory/chordShapes.test.ts` — every shape replayed through the theory (right notes, four-fret window).
 
 ## Build / config / deploy

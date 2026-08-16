@@ -17,7 +17,8 @@ interface StoreState {
 
   // Board-level actions
   addBoard: (name?: string) => string;
-  importBoard: (board: Board) => string;
+  /** Import one or many boards (fresh ids, original dates kept); returns their ids. */
+  importBoards: (boards: Board[]) => string[];
   deleteBoard: (boardId: string) => void;
   duplicateBoard: (boardId: string) => string | null;
   updateBoardMeta: (
@@ -78,11 +79,21 @@ export const useStore = create<StoreState>()(
         return board.id;
       },
 
-      importBoard: (board) => {
-        // Re-id to avoid collisions with existing boards.
-        const imported = cloneBoard(board, board.name);
-        set((s) => ({ boards: [imported, ...s.boards] }));
-        return imported.id;
+      importBoards: (boards) => {
+        const imported = boards.map((b) => {
+          // Re-id to avoid collisions with existing boards.
+          const copy = cloneBoard(b, b.name);
+          // An import is a restore, not a duplication: keep the original dates
+          // so the dashboard's most-recent-first order survives the round trip,
+          // instead of every board arriving stamped with the same instant.
+          return {
+            ...copy,
+            createdAt: typeof b.createdAt === 'number' ? b.createdAt : copy.createdAt,
+            updatedAt: typeof b.updatedAt === 'number' ? b.updatedAt : copy.updatedAt,
+          };
+        });
+        set((s) => ({ boards: [...imported, ...s.boards] }));
+        return imported.map((b) => b.id);
       },
 
       deleteBoard: (boardId) => set((s) => ({ boards: s.boards.filter((b) => b.id !== boardId) })),
