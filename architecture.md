@@ -46,6 +46,7 @@ layer (`src/store/`), which persists locally — there is no network tier.
 | `StrummingEditor.tsx` | Board-level strumming pattern editor (palette). |
 | `StrummingDiagram.tsx` | Pure SVG render of a strumming pattern (editor + report). |
 | `TabCard.tsx` | Tab (tablature) section editor: keyboard grid + fretboard-click input. |
+| `TuningOptions.tsx` | Tuning `<option>`s grouped by family; shared by the fretboard and tab pickers. |
 | `ChordsCard.tsx` | Chord-grid section editor: a box per chord, with a picker and a position cycler. |
 | `TabDiagram.tsx` | Pure HTML render of a tab (editor + report). |
 | `ReportView.tsx` | Consolidated, print-ready page; sections flow continuously and **the browser paginates** (`break-inside: avoid` per section, no JS chunking); renders the diagrams statically. |
@@ -61,7 +62,7 @@ layer (`src/store/`), which persists locally — there is no network tier.
 | `src/music-theory/chords.ts` | Chord formulas, `chordToneRoles`, `parseChordId`, `chordDisplayName`. |
 | `src/music-theory/harmony.ts` | `keySummary()`: a key's letter-spelled notes + its diatonic triads/sevenths with roman numerals. |
 | `src/music-theory/chordShapes.ts` | `chordShapes()`: curated guitar fingerings — every position of each chord, 12 chord types, standard tuning. |
-| `src/music-theory/fretboard.ts` | `TUNINGS`, `getTuning`, `pitchAt` (string+fret → pitch), inlay dots. |
+| `src/music-theory/fretboard.ts` | `TUNINGS` (6-string, grouped by `TUNING_FAMILIES`), `getTuning`, `pitchAt` (string+fret → pitch), inlay dots. |
 | `src/music-theory/index.ts` | Barrel re-exporting the seven modules above. |
 
 ### State + Persistence ("backend" = local)

@@ -16,6 +16,7 @@ import {
   parseChordId,
   getTuning,
   keySummary,
+  TUNINGS,
 } from './index';
 
 describe('notes', () => {
@@ -172,6 +173,44 @@ describe('fretboard', () => {
   it('standard tuning open strings', () => {
     const t = getTuning('standard')!;
     expect(t.strings).toEqual([4, 9, 2, 7, 11, 4]); // E A D G B E
+  });
+
+  /** Semitones from each string up to the next, low → high. */
+  const steps = (strings: number[]) => strings.slice(1).map((pc, i) => mod12(pc - strings[i]));
+  const ofFamily = (family: string) => TUNINGS.filter((t) => t.family === family);
+
+  it('keeps every tuning id that saved boards may reference', () => {
+    for (const id of ['standard', 'drop-d', 'dadgad', 'open-g', 'open-d', 'half-step-down']) {
+      expect(getTuning(id), id).toBeDefined();
+    }
+    expect(new Set(TUNINGS.map((t) => t.id)).size).toBe(TUNINGS.length);
+  });
+
+  it('includes C# Standard and Drop C#', () => {
+    expect(getTuning('c-sharp-standard')!.strings).toEqual([1, 6, 11, 4, 8, 1]); // C# F# B E G# C#
+    expect(getTuning('drop-c-sharp')!.strings).toEqual([1, 8, 1, 6, 10, 3]); // C# G# C# F# A# D#
+  });
+
+  it('standard tunings are E Standard moved down, named by the lowest string', () => {
+    for (const t of ofFamily('standard')) {
+      expect(steps(t.strings), t.id).toEqual([5, 5, 5, 4, 5]);
+      expect(t.name.startsWith(`${t.labels[0]} Standard`), t.id).toBe(true);
+    }
+  });
+
+  it('drop tunings lower only the lowest string a whole step, named by its new note', () => {
+    for (const t of ofFamily('drop')) {
+      expect(steps(t.strings), t.id).toEqual([7, 5, 5, 4, 5]);
+      expect(t.name.startsWith(`Drop ${t.labels[0]}`), t.id).toBe(true);
+    }
+  });
+
+  it('open tunings sound the major chord they are named for', () => {
+    for (const t of ofFamily('open')) {
+      const root = parseNote(t.name.split(' ')[1])!;
+      const triad = [root, mod12(root + 4), mod12(root + 7)].sort((a, b) => a - b);
+      expect([...new Set(t.strings)].sort((a, b) => a - b), t.id).toEqual(triad);
+    }
   });
 
   it('pitchAt computes fretted notes', () => {

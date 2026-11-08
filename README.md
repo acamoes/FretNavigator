@@ -14,7 +14,7 @@ Built with **React + TypeScript + Vite**, Zustand for state, and a pure, testabl
 ## Features
 
 - **Boards → Fretboards hierarchy.** A board (e.g. _"Jungle – Tash Sultana"_) holds any number of independent fretboards (e.g. _Chords_, _Solo – Verse_, _Solo – Chorus_). Create, rename, duplicate, delete, reorder.
-- **Configurable fretboards:** tuning (standard + drop D, DADGAD, open G/D, half-step down), fret count (5–24), capo.
+- **Configurable fretboards:** tuning — 16 six-string tunings grouped by family: Standard (E, Eb, D, C#, C, B), Drop (D, C#, C, B), Open (G, D, E, A, C) and DADGAD, fret count (5–24), capo.
 - **Notes / Intervals toggle.** In intervals mode the chosen root shows **R** and the major-scale degrees show **2–7**; non-scale notes are left blank. The root comes from the Root selector _or_ simply the first note you pin on the fretboard.
 - **Key selector.** Highlights all notes of a key (major, the modes, harmonic/melodic minor, pentatonics, blues) in a neutral base color.
 - **Song key + degree table.** Set the key at the top of a board to get its correctly spelled notes (Eb major reads _Eb F G Ab Bb C D_, never _D#…_) and the chord on every degree — triad, seventh, roman numeral and function (_V · G · G7 · Dominant_). One click applies the key to every fretboard.

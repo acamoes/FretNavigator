@@ -298,7 +298,7 @@ textarea:focus {
 .field--narrow select {
   width: 74px;
 }
-/* Tuning names are long ("Standard (E A D G B E)"), so they need more room than
+/* Tuning names are long ("C# Standard (C# F# B E G# C#)"), so they need more room than
    the numeric --narrow fields — but not the width of the longest option. */
 .field--tuning select {
   width: 210px;

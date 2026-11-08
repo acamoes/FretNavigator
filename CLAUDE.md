@@ -10,6 +10,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
   migrations, keep/refine as transient state, Pages base path, print CSS…).
   Read it before changing the data model or persistence.
 - **`todo.md`** — current open items.
+- **`CONTEXT.md`** — the domain glossary (tuning families, sounding pitch…). Use
+  its terms in code and UI copy.
 
 ## Commands
 

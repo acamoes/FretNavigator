@@ -3,9 +3,10 @@ import { Board, TabSection } from '../types';
 import { useStore } from '../store/useStore';
 import { createFretboard } from '../store/factories';
 import { DEFAULT_NOTE_STYLE } from '../store/colorPresets';
-import { getTuning, TUNINGS } from '../music-theory';
+import { getTuning } from '../music-theory';
 import { TabDiagram } from './TabDiagram';
 import { FretboardDiagram } from './FretboardDiagram';
+import { TuningOptions } from './TuningOptions';
 
 interface Props {
   board: Board;
@@ -207,11 +208,7 @@ export function TabCard({ board, tab, index, total }: Props) {
         <label className="field field--tuning">
           <span>Tuning</span>
           <select value={tab.tuningId} onChange={(e) => changeTuning(e.target.value)}>
-            {TUNINGS.map((t) => (
-              <option key={t.id} value={t.id}>
-                {t.name}
-              </option>
-            ))}
+            <TuningOptions />
           </select>
         </label>
         <button type="button" className="btn btn--ghost btn--sm" onClick={() => advance(cursor.col, cursor.si)}>

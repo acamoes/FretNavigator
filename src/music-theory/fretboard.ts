@@ -5,9 +5,21 @@
 
 import { mod12, parseNote, PitchClass } from './notes';
 
+/** How a tuning relates to E Standard; the tuning pickers group by this. */
+export type TuningFamily = 'standard' | 'drop' | 'open' | 'other';
+
+export const TUNING_FAMILIES: { id: TuningFamily; label: string }[] = [
+  { id: 'standard', label: 'Standard' },
+  { id: 'drop', label: 'Drop' },
+  { id: 'open', label: 'Open' },
+  { id: 'other', label: 'Other' },
+];
+
 export interface Tuning {
+  /** Persisted in saved boards and exported files — never rename an existing id. */
   id: string;
   name: string;
+  family: TuningFamily;
   /** Open-string pitch classes, low string first. */
   strings: PitchClass[];
   /** Human-readable string names low->high, for labels. */
@@ -15,20 +27,43 @@ export interface Tuning {
 }
 
 export const TUNINGS: Tuning[] = [
-  { id: 'standard', name: 'Standard (E A D G B E)', strings: notes('E', 'A', 'D', 'G', 'B', 'E'), labels: ['E', 'A', 'D', 'G', 'B', 'E'] },
-  { id: 'drop-d', name: 'Drop D (D A D G B E)', strings: notes('D', 'A', 'D', 'G', 'B', 'E'), labels: ['D', 'A', 'D', 'G', 'B', 'E'] },
-  { id: 'dadgad', name: 'DADGAD', strings: notes('D', 'A', 'D', 'G', 'A', 'D'), labels: ['D', 'A', 'D', 'G', 'A', 'D'] },
-  { id: 'open-g', name: 'Open G (D G D G B D)', strings: notes('D', 'G', 'D', 'G', 'B', 'D'), labels: ['D', 'G', 'D', 'G', 'B', 'D'] },
-  { id: 'open-d', name: 'Open D (D A D F# A D)', strings: notes('D', 'A', 'D', 'F#', 'A', 'D'), labels: ['D', 'A', 'D', 'F#', 'A', 'D'] },
-  { id: 'half-step-down', name: 'Half-step Down (Eb Ab Db Gb Bb Eb)', strings: notes('D#', 'G#', 'C#', 'F#', 'A#', 'D#'), labels: ['Eb', 'Ab', 'Db', 'Gb', 'Bb', 'Eb'] },
+  tuning('standard', 'standard', 'E Standard', 'E A D G B E'),
+  tuning('half-step-down', 'standard', 'Eb Standard', 'Eb Ab Db Gb Bb Eb'),
+  tuning('d-standard', 'standard', 'D Standard', 'D G C F A D'),
+  tuning('c-sharp-standard', 'standard', 'C# Standard', 'C# F# B E G# C#'),
+  tuning('c-standard', 'standard', 'C Standard', 'C F Bb Eb G C'),
+  tuning('b-standard', 'standard', 'B Standard', 'B E A D F# B'),
+
+  tuning('drop-d', 'drop', 'Drop D', 'D A D G B E'),
+  tuning('drop-c-sharp', 'drop', 'Drop C#', 'C# G# C# F# A# D#'),
+  tuning('drop-c', 'drop', 'Drop C', 'C G C F A D'),
+  tuning('drop-b', 'drop', 'Drop B', 'B F# B E G# C#'),
+
+  tuning('open-g', 'open', 'Open G', 'D G D G B D'),
+  tuning('open-d', 'open', 'Open D', 'D A D F# A D'),
+  tuning('open-e', 'open', 'Open E', 'E B E G# B E'),
+  tuning('open-a', 'open', 'Open A', 'E A E A C# E'),
+  tuning('open-c', 'open', 'Open C', 'C G C G C E'),
+
+  tuning('dadgad', 'other', 'DADGAD', 'D A D G A D'),
 ];
 
-function notes(...names: string[]): PitchClass[] {
-  return names.map((n) => {
-    const pc = parseNote(n);
-    if (pc === null) throw new Error(`Invalid tuning note: ${n}`);
-    return pc;
-  });
+/**
+ * One source string gives both the labels and the pitch classes, so they can't
+ * drift apart. The label is spelled as written here (Eb Standard in flats,
+ * C# Standard in sharps), which is why it isn't derived from `noteName`.
+ */
+function tuning(id: string, family: TuningFamily, title: string, spelled: string): Tuning {
+  const labels = spelled.split(' ');
+  // "DADGAD" already spells its notes; don't repeat them in brackets.
+  const name = title === labels.join('') ? title : `${title} (${spelled})`;
+  return { id, name, family, strings: labels.map(toPitchClass), labels };
+}
+
+function toPitchClass(n: string): PitchClass {
+  const pc = parseNote(n);
+  if (pc === null) throw new Error(`Invalid tuning note: ${n}`);
+  return pc;
 }
 
 export function getTuning(id: string): Tuning | undefined {

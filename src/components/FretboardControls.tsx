@@ -9,10 +9,10 @@ import {
   noteName,
   parseKeyId,
   SCALE_TYPES,
-  TUNINGS,
 } from '../music-theory';
 import { chordColor } from '../store/colorPresets';
 import { effectiveRootNote } from './fretboardLayout';
+import { TuningOptions } from './TuningOptions';
 
 interface Props {
   fretboard: Fretboard;
@@ -58,11 +58,7 @@ export function FretboardControls({ fretboard: fb, onChange, focusedChordIndex, 
         <label className="field">
           <span>Tuning</span>
           <select value={fb.tuningId} onChange={(e) => onChange({ tuningId: e.target.value })}>
-            {TUNINGS.map((t) => (
-              <option key={t.id} value={t.id}>
-                {t.name}
-              </option>
-            ))}
+            <TuningOptions />
           </select>
         </label>
 
